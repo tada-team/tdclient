@@ -67,34 +67,26 @@ func (s Session) Ping() error {
 	return err
 }
 
-func (s Session) MyJID(teamUid string) (string, error) {
-	type me struct {
-		Jid string `json:"jid"`
-	}
-
-	type team struct {
-		Me me `json:"me"`
-	}
-
+func (s Session) Me(teamUid string) (tdproto.Contact, error) {
 	resp := new(struct {
 		apiResp
-		Result team `json:"result"`
+		Result tdproto.Team `json:"result"`
 	})
 
 	b, err := s.doGet("/api/v4/teams/"+teamUid, resp)
 	if err != nil {
-		return "", err
+		return tdproto.Contact{}, err
 	}
 
 	if err := json.Unmarshal(b, resp); err != nil {
-		return "", errors.Wrap(err, "unmarshall fail")
+		return tdproto.Contact{}, errors.Wrap(err, "unmarshall fail")
 	}
 
 	if !resp.Ok {
-		return "", errors.New(resp.Error)
+		return tdproto.Contact{}, errors.New(resp.Error)
 	}
 
-	return resp.Result.Me.Jid, nil
+	return resp.Result.Me, nil
 }
 
 func (s Session) httpClient() *http.Client {

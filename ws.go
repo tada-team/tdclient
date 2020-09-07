@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tada-team/tdproto"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -72,22 +74,16 @@ type wsClient struct {
 	fail   chan error
 }
 
-func (w *wsClient) SendPlainMessage(to, text string) string {
-	type messageContent struct {
-		Text string `json:"text"`
-		Type string `json:"type"`
-	}
-
+func (w *wsClient) SendPlainMessage(to tdproto.HasJid, text string) string {
 	uid := uuid.New().String()
 	w.send("client.message.updated", params{
 		"message_id": uid,
-		"to":         to,
-		"content": messageContent{
+		"to":         to.JID(),
+		"content": tdproto.MessageContent{
 			Type: "plain",
 			Text: text,
 		},
 	})
-
 	return uid
 }
 
@@ -101,18 +97,13 @@ func (w *wsClient) Ping() string {
 	return w.send("client.ping", params{})
 }
 
-var wsTimeout = errors.New("Timeout")
-
-type Message struct {
-	PushText  string `json:"push_text,omitempty"`
-	MessageId string `json:"message_id"`
-}
+var WsTimeout = errors.New("Timeout")
 
 type serverMessageUpdated struct {
 	Name   string `json:"event"`
 	Params struct {
-		Messages []Message `json:"messages"`
-		Delayed  bool      `json:"delayed"`
+		Messages []tdproto.Message `json:"messages"`
+		Delayed  bool              `json:"delayed"`
 	} `json:"params"`
 }
 
@@ -123,16 +114,16 @@ type serverConfirm struct {
 	} `json:"params"`
 }
 
-func (w *wsClient) waitForMessage(timeout time.Duration) (Message, bool, error) {
+func (w *wsClient) WaitForMessage(timeout time.Duration) (tdproto.Message, bool, error) {
 	v := serverMessageUpdated{}
 	err := w.waitFor("server.message.updated", timeout, &v)
 	if err != nil {
-		return Message{}, false, err
+		return tdproto.Message{}, false, err
 	}
 	return v.Params.Messages[0], v.Params.Delayed, nil
 }
 
-func (w *wsClient) waitForConfirm(timeout time.Duration) (string, error) {
+func (w *wsClient) WaitForConfirm(timeout time.Duration) (string, error) {
 	v := serverConfirm{}
 	err := w.waitFor("server.confirm", timeout, &v)
 	if err != nil {
@@ -154,7 +145,7 @@ func (w *wsClient) waitFor(name string, timeout time.Duration, v interface{}) er
 				return nil
 			}
 		case <-time.After(timeout):
-			return wsTimeout
+			return WsTimeout
 		}
 	}
 }
