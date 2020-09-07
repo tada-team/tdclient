@@ -119,20 +119,20 @@ func (w *wsClient) waitFor(name string, v interface{}) error {
 			switch ev.name {
 			case name:
 				if err := json.Unmarshal(ev.raw, &v); err != nil {
-					w.fail <- errors.Wrap(err, "json fail")
+					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
 					return nil
 				}
 			case "server.warning":
 				t := new(tdproto.ServerWarning)
 				if err := json.Unmarshal(ev.raw, &t); err != nil {
-					w.fail <- errors.Wrap(err, "json fail")
+					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
 					return nil
 				}
 				log.Println("tdclient: warn:", t.Params.Message)
 			case "server.panic":
 				t := new(tdproto.ServerPanic)
 				if err := json.Unmarshal(ev.raw, &t); err != nil {
-					w.fail <- errors.Wrap(err, "json fail")
+					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
 					return nil
 				}
 				w.fail <- fmt.Errorf("server panic: %s", t.Params.Code)
