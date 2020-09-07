@@ -10,3 +10,5 @@ github.com/tada-team/tdproto v0.0.3 h1:BCkh0cDz7EU778FmfpzEWn7Ifvl+KyYW+yttK339K
 github.com/tada-team/tdproto v0.0.3/go.mod h1:VY1rTZXOhMxyZ1VE/Q82PB27AaFAooEQJFkO0HMlN8M=
 github.com/tada-team/tdproto v0.0.7 h1:eGQQG+/QNwWp0savQmnirJ80gmMajsR2MI6fyzCPNi8=
 github.com/tada-team/tdproto v0.0.7/go.mod h1:eQGUKL2y6C9EGrhOZY0HU7bb/5lBdVfHBlx2+e0l7x4=
+github.com/tada-team/tdproto v0.0.12 h1:mVKzWHsu6rWyz1idWP6ewe5rCtThiU9CcukZiTo8URM=
+github.com/tada-team/tdproto v0.0.12/go.mod h1:eQGUKL2y6C9EGrhOZY0HU7bb/5lBdVfHBlx2+e0l7x4=

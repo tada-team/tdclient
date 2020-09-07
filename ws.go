@@ -35,8 +35,8 @@ func (s *Session) WsClient(team string, onfail func(error)) (*wsClient, error) {
 		Session: s,
 		team:    team,
 		conn:    conn,
-		inbox:   make(chan event, 100),
-		outbox:  make(chan event, 100),
+		inbox:   make(chan serverEvent, 100),
+		outbox:  make(chan tdproto.Event, 100),
 		fail:    make(chan error),
 	}
 
@@ -56,11 +56,9 @@ func (s *Session) WsClient(team string, onfail func(error)) (*wsClient, error) {
 	return w, nil
 }
 
-type event struct {
-	Name      string      `json:"event"`
-	Params    interface{} `json:"params"`
-	ConfirmId string      `json:"confirm_id,omitempty"`
-	raw       []byte
+type serverEvent struct {
+	name string
+	raw  []byte
 }
 
 type wsClient struct {
@@ -68,84 +66,71 @@ type wsClient struct {
 	team   string
 	conn   *websocket.Conn
 	closed bool
-	inbox  chan event
-	outbox chan event
+	inbox  chan serverEvent
+	outbox chan tdproto.Event
 	fail   chan error
 }
 
 func (w *wsClient) Ping() string {
-	return w.send("client.ping", nil)
-}
-
-func (w *wsClient) Confirm(id string) string {
-	return w.send("client.confirm", tdproto.ClientConfirmParams{
-		ConfirmId: id,
-	})
+	return w.send(tdproto.NewClientPing())
 }
 
 func (w *wsClient) SendPlainMessage(to tdproto.JID, text string) string {
 	uid := uuid.New().String()
-	w.send("client.message.updated", tdproto.ClientMessageUpdatedParams{
+	w.send(tdproto.NewClientMessageUpdated(tdproto.ClientMessageUpdatedParams{
 		MessageId: uid,
 		To:        to,
 		Content: tdproto.MessageContent{
 			Type: tdproto.MediatypePlain,
 			Text: text,
 		},
-	})
+	}))
 	return uid
 }
 
 func (w *wsClient) DeleteMessage(uid string) {
-	w.send("client.message.deleted", tdproto.ClientMessageDeletedParams{
-		MessageId: uid,
-	})
+	w.send(tdproto.NewClientMessageDeleted(uid))
 }
 
-func (w *wsClient) WaitForMessage(timeout time.Duration) (tdproto.Message, bool, error) {
+func (w *wsClient) WaitForMessage() (tdproto.Message, bool, error) {
 	v := new(tdproto.ServerMessageUpdated)
-	err := w.waitFor("server.message.updated", timeout, &v)
+	err := w.waitFor("server.message.updated", &v)
 	if err != nil {
 		return tdproto.Message{}, false, err
 	}
 	return v.Params.Messages[0], v.Params.Delayed, nil
 }
 
-func (w *wsClient) WaitForConfirm(timeout time.Duration) (string, error) {
+func (w *wsClient) WaitForConfirm() (string, error) {
 	v := new(tdproto.ServerConfirm)
-	err := w.waitFor("server.confirm", timeout, v)
+	err := w.waitFor("server.confirm", v)
 	if err != nil {
 		return "", err
 	}
 	return v.Params.ConfirmId, nil
 }
 
-func (w *wsClient) waitFor(name string, timeout time.Duration, v interface{}) error {
+func (w *wsClient) waitFor(name string, v interface{}) error {
 	for {
 		select {
-		case event := <-w.inbox:
-			w.Session.logger.Println("got:", string(event.raw))
-			if event.Name == name {
-				if err := json.Unmarshal(event.raw, &v); err != nil {
+		case ev := <-w.inbox:
+			w.logger.Println("got:", string(ev.raw))
+			if ev.name == name {
+				if err := json.Unmarshal(ev.raw, &v); err != nil {
 					w.fail <- errors.Wrap(err, "json fail")
 					return nil
 				}
 				return nil
 			}
-		case <-time.After(timeout):
+		case <-time.After(w.Timeout):
 			return WsTimeout
 		}
 	}
 }
 
-func (w *wsClient) send(name string, params interface{}) string {
-	uid := uuid.New().String()
-	w.outbox <- event{
-		Name:      name,
-		Params:    params,
-		ConfirmId: uid,
-	}
-	return uid
+func (w *wsClient) send(e tdproto.Event) string {
+	w.outbox <- e
+	return e.GetConfirmId()
 }
 
 func (w *wsClient) outboxLoop() {
@@ -158,7 +143,7 @@ func (w *wsClient) outboxLoop() {
 			return
 		}
 
-		w.Session.logger.Println("send:", string(b))
+		w.logger.Println("send:", string(b))
 		if err := w.conn.WriteMessage(websocket.BinaryMessage, b); err != nil {
 			w.fail <- errors.Wrap(err, "ws client fail")
 			return
@@ -174,17 +159,19 @@ func (w wsClient) inboxLoop() {
 			return
 		}
 
-		v := event{}
+		v := new(tdproto.BaseEvent)
 		if err := json.Unmarshal(data, &v); err != nil {
 			w.fail <- errors.Wrap(err, "json fail")
 			return
 		}
 
 		if v.ConfirmId != "" {
-			w.Confirm(v.ConfirmId)
+			w.send(tdproto.NewClientConfirm(v.ConfirmId))
 		}
 
-		v.raw = data
-		w.inbox <- v
+		w.inbox <- serverEvent{
+			name: v.Name,
+			raw:  data,
+		}
 	}
 }
