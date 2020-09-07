@@ -88,8 +88,8 @@ func (w *wsClient) SendPlainMessage(to tdproto.JID, text string) string {
 	return uid
 }
 
-func (w *wsClient) DeleteMessage(uid string) {
-	w.send(tdproto.NewClientMessageDeleted(uid))
+func (w *wsClient) DeleteMessage(uid string) string {
+	return w.send(tdproto.NewClientMessageDeleted(uid))
 }
 
 func (w *wsClient) WaitForMessage() (tdproto.Message, bool, error) {
