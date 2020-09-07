@@ -7,12 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tada-team/tdproto"
-
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
+	"github.com/tada-team/tdproto"
 )
+
+var WsTimeout = errors.New("Timeout")
 
 func (s *Session) WsClient(team string, onfail func(error)) (*wsClient, error) {
 	if s.token == "" {
@@ -55,12 +56,10 @@ func (s *Session) WsClient(team string, onfail func(error)) (*wsClient, error) {
 	return w, nil
 }
 
-type params map[string]interface{}
-
 type event struct {
-	Name      string `json:"event"`
-	Params    params `json:"params"`
-	ConfirmId string `json:"confirm_id,omitempty"`
+	Name      string      `json:"event"`
+	Params    interface{} `json:"params"`
+	ConfirmId string      `json:"confirm_id,omitempty"`
 	raw       []byte
 }
 
@@ -74,13 +73,23 @@ type wsClient struct {
 	fail   chan error
 }
 
-func (w *wsClient) SendPlainMessage(to tdproto.HasJid, text string) string {
+func (w *wsClient) Ping() string {
+	return w.send("client.ping", nil)
+}
+
+func (w *wsClient) Confirm(id string) string {
+	return w.send("client.confirm", tdproto.ClientConfirmParams{
+		ConfirmId: id,
+	})
+}
+
+func (w *wsClient) SendPlainMessage(to tdproto.JID, text string) string {
 	uid := uuid.New().String()
-	w.send("client.message.updated", params{
-		"message_id": uid,
-		"to":         to.JID(),
-		"content": tdproto.MessageContent{
-			Type: "plain",
+	w.send("client.message.updated", tdproto.ClientMessageUpdatedParams{
+		MessageId: uid,
+		To:        to,
+		Content: tdproto.MessageContent{
+			Type: tdproto.MediatypePlain,
 			Text: text,
 		},
 	})
@@ -88,34 +97,13 @@ func (w *wsClient) SendPlainMessage(to tdproto.HasJid, text string) string {
 }
 
 func (w *wsClient) DeleteMessage(uid string) {
-	w.send("client.message.delete", params{
-		"message_id": uid,
+	w.send("client.message.deleted", tdproto.ClientMessageDeletedParams{
+		MessageId: uid,
 	})
 }
 
-func (w *wsClient) Ping() string {
-	return w.send("client.ping", params{})
-}
-
-var WsTimeout = errors.New("Timeout")
-
-type serverMessageUpdated struct {
-	Name   string `json:"event"`
-	Params struct {
-		Messages []tdproto.Message `json:"messages"`
-		Delayed  bool              `json:"delayed"`
-	} `json:"params"`
-}
-
-type serverConfirm struct {
-	Name   string `json:"event"`
-	Params struct {
-		ConfirmId string `json:"confirm_id"`
-	} `json:"params"`
-}
-
 func (w *wsClient) WaitForMessage(timeout time.Duration) (tdproto.Message, bool, error) {
-	v := serverMessageUpdated{}
+	v := new(tdproto.ServerMessageUpdated)
 	err := w.waitFor("server.message.updated", timeout, &v)
 	if err != nil {
 		return tdproto.Message{}, false, err
@@ -124,8 +112,8 @@ func (w *wsClient) WaitForMessage(timeout time.Duration) (tdproto.Message, bool,
 }
 
 func (w *wsClient) WaitForConfirm(timeout time.Duration) (string, error) {
-	v := serverConfirm{}
-	err := w.waitFor("server.confirm", timeout, &v)
+	v := new(tdproto.ServerConfirm)
+	err := w.waitFor("server.confirm", timeout, v)
 	if err != nil {
 		return "", err
 	}
@@ -150,7 +138,7 @@ func (w *wsClient) waitFor(name string, timeout time.Duration, v interface{}) er
 	}
 }
 
-func (w *wsClient) send(name string, params params) string {
+func (w *wsClient) send(name string, params interface{}) string {
 	uid := uuid.New().String()
 	w.outbox <- event{
 		Name:      name,
@@ -193,9 +181,7 @@ func (w wsClient) inboxLoop() {
 		}
 
 		if v.ConfirmId != "" {
-			w.send("client.confirm", params{
-				"confirm_id": v.ConfirmId,
-			})
+			w.Confirm(v.ConfirmId)
 		}
 
 		v.raw = data
