@@ -3,6 +3,7 @@ package tdclient
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -115,13 +116,29 @@ func (w *wsClient) waitFor(name string, v interface{}) error {
 		select {
 		case ev := <-w.inbox:
 			w.logger.Println("got:", string(ev.raw))
-			if ev.name == name {
+			switch ev.name {
+			case name:
 				if err := json.Unmarshal(ev.raw, &v); err != nil {
 					w.fail <- errors.Wrap(err, "json fail")
 					return nil
 				}
+			case "server.warning":
+				t := new(tdproto.ServerWarning)
+				if err := json.Unmarshal(ev.raw, &t); err != nil {
+					w.fail <- errors.Wrap(err, "json fail")
+					return nil
+				}
+				log.Println("tdclient: warn:", t.Params.Message)
+			case "server.panic":
+				t := new(tdproto.ServerPanic)
+				if err := json.Unmarshal(ev.raw, &t); err != nil {
+					w.fail <- errors.Wrap(err, "json fail")
+					return nil
+				}
+				w.fail <- fmt.Errorf("server panic: %s", t.Params.Code)
 				return nil
 			}
+			return nil
 		case <-time.After(w.Timeout):
 			return WsTimeout
 		}
