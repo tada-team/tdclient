@@ -95,7 +95,7 @@ func (w *WsSession) DeleteMessage(uid string) string {
 
 func (w *WsSession) WaitForMessage() (tdproto.Message, bool, error) {
 	v := new(tdproto.ServerMessageUpdated)
-	err := w.waitFor("server.message.updated", &v)
+	err := w.WaitFor("server.message.updated", &v)
 	if err != nil {
 		return tdproto.Message{}, false, err
 	}
@@ -104,14 +104,14 @@ func (w *WsSession) WaitForMessage() (tdproto.Message, bool, error) {
 
 func (w *WsSession) WaitForConfirm() (string, error) {
 	v := new(tdproto.ServerConfirm)
-	err := w.waitFor("server.confirm", v)
+	err := w.WaitFor("server.confirm", v)
 	if err != nil {
 		return "", err
 	}
 	return v.Params.ConfirmId, nil
 }
 
-func (w *WsSession) waitFor(name string, v interface{}) error {
+func (w *WsSession) WaitFor(name string, v interface{}) error {
 	for {
 		select {
 		case ev := <-w.inbox:
@@ -122,6 +122,7 @@ func (w *WsSession) waitFor(name string, v interface{}) error {
 					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
 					return nil
 				}
+				return nil
 			case "server.warning":
 				t := new(tdproto.ServerWarning)
 				if err := json.Unmarshal(ev.raw, &t); err != nil {
@@ -138,7 +139,6 @@ func (w *WsSession) waitFor(name string, v interface{}) error {
 				w.fail <- fmt.Errorf("server panic: %s", t.Params.Code)
 				return nil
 			}
-			return nil
 		case <-time.After(w.Timeout):
 			return Timeout
 		}
