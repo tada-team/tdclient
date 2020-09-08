@@ -16,7 +16,7 @@ import (
 
 var WsTimeout = errors.New("Timeout")
 
-func (s *Session) WsClient(team string, onfail func(error)) (*wsClient, error) {
+func (s *Session) WsClient(team string, onfail func(error)) (*WsClient, error) {
 	if s.token == "" {
 		return nil, errors.New("empty token")
 	}
@@ -32,7 +32,7 @@ func (s *Session) WsClient(team string, onfail func(error)) (*wsClient, error) {
 		return nil, err
 	}
 
-	w := &wsClient{
+	w := &WsClient{
 		Session: s,
 		team:    team,
 		conn:    conn,
@@ -62,7 +62,7 @@ type serverEvent struct {
 	raw  []byte
 }
 
-type wsClient struct {
+type WsClient struct {
 	*Session
 	team   string
 	conn   *websocket.Conn
@@ -72,11 +72,11 @@ type wsClient struct {
 	fail   chan error
 }
 
-func (w *wsClient) Ping() string {
+func (w *WsClient) Ping() string {
 	return w.send(tdproto.NewClientPing())
 }
 
-func (w *wsClient) SendPlainMessage(to tdproto.JID, text string) string {
+func (w *WsClient) SendPlainMessage(to tdproto.JID, text string) string {
 	uid := uuid.New().String()
 	w.send(tdproto.NewClientMessageUpdated(tdproto.ClientMessageUpdatedParams{
 		MessageId: uid,
@@ -89,11 +89,11 @@ func (w *wsClient) SendPlainMessage(to tdproto.JID, text string) string {
 	return uid
 }
 
-func (w *wsClient) DeleteMessage(uid string) string {
+func (w *WsClient) DeleteMessage(uid string) string {
 	return w.send(tdproto.NewClientMessageDeleted(uid))
 }
 
-func (w *wsClient) WaitForMessage() (tdproto.Message, bool, error) {
+func (w *WsClient) WaitForMessage() (tdproto.Message, bool, error) {
 	v := new(tdproto.ServerMessageUpdated)
 	err := w.waitFor("server.message.updated", &v)
 	if err != nil {
@@ -102,7 +102,7 @@ func (w *wsClient) WaitForMessage() (tdproto.Message, bool, error) {
 	return v.Params.Messages[0], v.Params.Delayed, nil
 }
 
-func (w *wsClient) WaitForConfirm() (string, error) {
+func (w *WsClient) WaitForConfirm() (string, error) {
 	v := new(tdproto.ServerConfirm)
 	err := w.waitFor("server.confirm", v)
 	if err != nil {
@@ -111,7 +111,7 @@ func (w *wsClient) WaitForConfirm() (string, error) {
 	return v.Params.ConfirmId, nil
 }
 
-func (w *wsClient) waitFor(name string, v interface{}) error {
+func (w *WsClient) waitFor(name string, v interface{}) error {
 	for {
 		select {
 		case ev := <-w.inbox:
@@ -145,12 +145,12 @@ func (w *wsClient) waitFor(name string, v interface{}) error {
 	}
 }
 
-func (w *wsClient) send(e tdproto.Event) string {
+func (w *WsClient) send(e tdproto.Event) string {
 	w.outbox <- e
 	return e.GetConfirmId()
 }
 
-func (w *wsClient) outboxLoop() {
+func (w *WsClient) outboxLoop() {
 	for !w.closed {
 		data := <-w.outbox
 
@@ -168,7 +168,7 @@ func (w *wsClient) outboxLoop() {
 	}
 }
 
-func (w wsClient) inboxLoop() {
+func (w WsClient) inboxLoop() {
 	for !w.closed {
 		_, data, err := w.conn.ReadMessage()
 		if err != nil {
