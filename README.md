@@ -20,8 +20,8 @@ func main() {
    
     ws, err := client.Ws(team, nil)
     if err != nil {
-				panic(err)
-	  }
+        panic(err)
+    }
     
     ws.SendPlainMessage(chat, "hello, world") 
 }
