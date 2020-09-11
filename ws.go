@@ -1,7 +1,6 @@
 package tdclient
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"

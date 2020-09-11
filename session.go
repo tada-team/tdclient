@@ -1,7 +1,6 @@
 package tdclient
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -10,9 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/tada-team/tdproto"
-
 	"github.com/pkg/errors"
+	"github.com/tada-team/tdproto"
 )
 
 type apiResp struct {
@@ -25,18 +23,16 @@ type Session struct {
 	logger   *log.Logger
 	server   url.URL
 	token    string
+	cookie   string
 	features *tdproto.Features
 }
 
-func NewSession(server string, verbose bool) (Session, error) {
+func NewSession(server string) (Session, error) {
 	s := Session{
 		Timeout: 10 * time.Second,
 	}
 
 	s.logger = log.New(os.Stdout, "tdclient: ", log.LstdFlags|log.Lmicroseconds|log.Lmsgprefix)
-	if !verbose {
-		s.logger.SetOutput(ioutil.Discard)
-	}
 
 	u, err := url.Parse(server)
 	if err != nil {
@@ -59,7 +55,21 @@ func (s *Session) Features() (*tdproto.Features, error) {
 	return s.features, nil
 }
 
-func (s *Session) SetToken(token string) { s.token = token }
+func (s *Session) SetToken(v string) {
+	s.token = v
+}
+
+func (s *Session) SetCookie(v string) {
+	s.cookie = v
+}
+
+func (s *Session) SetVerbose(v bool) {
+	if v {
+		s.logger.SetOutput(os.Stdout)
+	} else {
+		s.logger.SetOutput(ioutil.Discard)
+	}
+}
 
 func (s Session) Ping() error {
 	resp := new(struct {
