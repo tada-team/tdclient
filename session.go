@@ -25,7 +25,7 @@ type Session struct {
 	logger   *log.Logger
 	server   url.URL
 	token    string
-	features tdproto.Features
+	features *tdproto.Features
 }
 
 func NewSession(server string, verbose bool) (Session, error) {
@@ -47,13 +47,16 @@ func NewSession(server string, verbose bool) (Session, error) {
 	}
 	s.server = *u
 
-	_, err = s.doGet("/features.json", &s.features)
-	if err != nil {
-		return Session{}, errors.Wrap(err, "invalid server: features.json not found")
-	}
-	s.logger.Println("tdclient: logged in to:", s.features.AppTitle)
-
 	return s, nil
+}
+
+func (s *Session) Features() (*tdproto.Features, error) {
+	if s.features == nil {
+		if _, err := s.doGet("/features.json", s.features); err != nil {
+			return s.features, err
+		}
+	}
+	return s.features, nil
 }
 
 func (s *Session) SetToken(token string) { s.token = token }
