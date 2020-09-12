@@ -6,17 +6,20 @@ Simple client library.
 import "github.com/tada-team/tdclient"
 
 func main() {
-    verbose := true
-    token := "secret"
     team := "uid"
     chat := "chat jid"
+    token := "secret"
     
-    client, err := tdclient.NewSession("https://web.tada.team", verbose)
+    client, err := tdclient.NewSession("https://web.tada.team")
     if err != nil {
         panic(err)
     }
     
-    client.SetToken("secret")
+    client.SetToken(token)
+    client.SetVerbose(true) // enable logging
+   
+    features := client.Features()
+    log.Prinln("server version:", features.Build)
    
     ws, err := client.Ws(team, nil)
     if err != nil {
