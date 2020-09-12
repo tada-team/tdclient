@@ -19,17 +19,22 @@ func main() {
     // bot token. Type "/newbot <NAME>" command in @TadaBot direct chat
     token := "secret"
     
+    // make http session
     client, err := tdclient.NewSession("https://web.tada.team")
     if err != nil {
         panic(err)
     }
     
     client.SetToken(token)
-    client.SetVerbose(true) // enable logging
+    
+    // enable logging
+    client.SetVerbose(true)
    
+    // getting server settings, for example
     features := client.Features()
     log.Prinln("server version:", features.Build)
    
+    // websocket connection 
     ws, err := client.Ws(team, nil)
     if err != nil {
         panic(err)
