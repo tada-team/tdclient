@@ -10,8 +10,13 @@ import (
 )
 
 func main() {
+    // your team uid
     team := "uid"
+    
+    // group / direct / task chat identifier
     chat := "chat jid"
+    
+    // bot token. Type "/newbot <NAME>" command in @TadaBot direct chat
     token := "secret"
     
     client, err := tdclient.NewSession("https://web.tada.team")
