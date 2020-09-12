@@ -3,7 +3,11 @@
 Simple client library.
 
 ```go
-import "github.com/tada-team/tdclient"
+import (
+    "time"
+    "github.com/tada-team/tdproto"
+    "github.com/tada-team/tdclient"
+)
 
 func main() {
     team := "uid"
@@ -26,6 +30,11 @@ func main() {
         panic(err)
     }
     
+    // composing like human. Full events list at https://github.com/tada-team/tdproto
+    ws.Send(tdproto.NewClientChatComposing(jid, true, nil))
+    time.Sleep(3*time.Second)
+    
+    // shortcut for simple messaging
     ws.SendPlainMessage(chat, "hello, world") 
 }
 ```
