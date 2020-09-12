@@ -5,6 +5,7 @@ Simple client library.
 ```go
 import (
     "time"
+    "log"
     "github.com/tada-team/tdproto"
     "github.com/tada-team/tdclient"
 )
