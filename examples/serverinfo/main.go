@@ -24,4 +24,5 @@ func main() {
 	}
 
 	fmt.Println("server version:", features.Build)
+	fmt.Println("max message length:", features.MaxMessageLength)
 }
