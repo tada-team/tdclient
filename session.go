@@ -48,7 +48,7 @@ func NewSession(server string) (Session, error) {
 
 func (s *Session) Features() (*tdproto.Features, error) {
 	if s.features == nil {
-		if _, err := s.doGet("/features.json", s.features); err != nil {
+		if _, err := s.doGet("/features.json", &s.features); err != nil {
 			return s.features, err
 		}
 	}
@@ -119,7 +119,9 @@ func (s Session) url(path string) string {
 func (s Session) doGet(path string, v interface{}) ([]byte, error) {
 	client := s.httpClient()
 
-	req, err := http.NewRequest("GET", s.url(path), nil)
+	path = s.url(path)
+	s.logger.Println("GET", path)
+	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "new request fail")
 	}
