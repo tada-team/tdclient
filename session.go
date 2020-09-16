@@ -86,6 +86,10 @@ func (s Session) Me(teamUid string) (tdproto.Contact, error) {
 		Result tdproto.Team `json:"result"`
 	})
 
+	if !tdproto.ValidUid(teamUid) {
+		return tdproto.Contact{}, errors.New("invalid team uid")
+	}
+
 	b, err := s.doGet("/api/v4/teams/"+teamUid, resp)
 	if err != nil {
 		return tdproto.Contact{}, err
@@ -100,6 +104,32 @@ func (s Session) Me(teamUid string) (tdproto.Contact, error) {
 	}
 
 	return resp.Result.Me, nil
+}
+
+func (s Session) Contacts(teamUid string) ([]tdproto.Contact, error) {
+	resp := new(struct {
+		apiResp
+		Result []tdproto.Contact `json:"result"`
+	})
+
+	if !tdproto.ValidUid(teamUid) {
+		return resp.Result, errors.New("invalid team uid")
+	}
+
+	b, err := s.doGet("/api/v4/teams/"+teamUid+"/contacts/", resp)
+	if err != nil {
+		return resp.Result, err
+	}
+
+	if err := JSON.Unmarshal(b, resp); err != nil {
+		return resp.Result, errors.Wrap(err, "unmarshall fail")
+	}
+
+	if !resp.Ok {
+		return resp.Result, errors.New(resp.Error)
+	}
+
+	return resp.Result, nil
 }
 
 func (s Session) httpClient() *http.Client {
