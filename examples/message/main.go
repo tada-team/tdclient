@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"flag"
+	"fmt"
 	"time"
 
 	"github.com/tada-team/tdclient"
@@ -9,41 +10,51 @@ import (
 )
 
 func main() {
-	// your team uid
-	team := "uid"
+	server := flag.String("server", "https://web.tada.team", "server address")
+	team := flag.String("team", "", "team uid")
+	chat := flag.String("chat", "", "chat jid")
+	token := flag.String("token", "", "bot token. Type \"/newbot <NAME>\" command in @TadaBot direct chat")
+	message := flag.String("message", "test message", "message text")
+	verbose := flag.Bool("verbose", false, "verbose logging")
+	flag.Parse()
 
-	// group / direct / task chat identifier
-	chat := "chat jid"
+	if *token == "" {
+		fmt.Println("-token required")
+		return
+	}
 
-	// bot token. Type "/newbot <NAME>" command in @TadaBot direct chat
-	token := "secret"
+	if *chat == "" {
+		fmt.Println("-chat required")
+		return
+	}
 
-	// make http session
-	client, err := tdclient.NewSession("https://web.tada.team")
+	if *team == "" {
+		fmt.Println("-team required")
+		return
+	}
+
+	client, err := tdclient.NewSession(*server)
 	if err != nil {
 		panic(err)
 	}
 
-	client.SetToken(token)
+	client.SetToken(*token)
+	client.SetVerbose(*verbose)
 
-	// enable logging
-	client.SetVerbose(true)
-
-	// getting server settings, for example
-	features, err := client.Features()
-	if err
-	log.Println("server version:", features.Build)
-
-	// websocket connection
-	ws, err := client.Ws(team, nil)
+	websocketConnection, err := client.Ws(*team, nil)
 	if err != nil {
 		panic(err)
 	}
+
+	recipient := *tdproto.NewJID(*chat)
 
 	// composing like human. Full events list at https://github.com/tada-team/tdproto
-	ws.Send(tdproto.NewClientChatComposing(jid, true, nil))
+	websocketConnection.Send(tdproto.NewClientChatComposing(recipient, true, nil))
 	time.Sleep(3 * time.Second)
 
 	// shortcut for simple messaging
-	ws.SendPlainMessage(chat, "hello, world")
+	websocketConnection.SendPlainMessage(recipient, *message)
+	if _, err := websocketConnection.WaitForConfirm(); err != nil {
+		panic(err)
+	}
 }
