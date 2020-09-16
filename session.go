@@ -91,7 +91,7 @@ func (s Session) Me(teamUid string) (tdproto.Contact, error) {
 		return tdproto.Contact{}, err
 	}
 
-	if err := json.Unmarshal(b, resp); err != nil {
+	if err := JSON.Unmarshal(b, resp); err != nil {
 		return tdproto.Contact{}, errors.Wrap(err, "unmarshall fail")
 	}
 
@@ -143,7 +143,7 @@ func (s Session) doGet(path string, v interface{}) ([]byte, error) {
 		return respData, errors.Wrapf(err, "status code: %d %s", resp.StatusCode, string(respData))
 	}
 
-	if err := json.Unmarshal(respData, &v); err != nil {
+	if err := JSON.Unmarshal(respData, &v); err != nil {
 		return respData, errors.Wrapf(err, "unmarshal fail on: %s", string(respData))
 	}
 

@@ -117,21 +117,21 @@ func (w *WsSession) WaitFor(name string, v interface{}) error {
 			w.logger.Println("got:", string(ev.raw))
 			switch ev.name {
 			case name:
-				if err := json.Unmarshal(ev.raw, &v); err != nil {
+				if err := JSON.Unmarshal(ev.raw, &v); err != nil {
 					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
 					return nil
 				}
 				return nil
 			case "server.warning":
 				t := new(tdproto.ServerWarning)
-				if err := json.Unmarshal(ev.raw, &t); err != nil {
+				if err := JSON.Unmarshal(ev.raw, &t); err != nil {
 					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
 					return nil
 				}
 				log.Println("tdclient: warn:", t.Params.Message)
 			case "server.panic":
 				t := new(tdproto.ServerPanic)
-				if err := json.Unmarshal(ev.raw, &t); err != nil {
+				if err := JSON.Unmarshal(ev.raw, &t); err != nil {
 					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
 					return nil
 				}
@@ -153,7 +153,7 @@ func (w *WsSession) outboxLoop() {
 	for !w.closed {
 		data := <-w.outbox
 
-		b, err := json.Marshal(data)
+		b, err := JSON.Marshal(data)
 		if err != nil {
 			w.fail <- errors.Wrap(err, "json marshal fail")
 			return
@@ -176,7 +176,7 @@ func (w WsSession) inboxLoop() {
 		}
 
 		v := new(tdproto.BaseEvent)
-		if err := json.Unmarshal(data, &v); err != nil {
+		if err := JSON.Unmarshal(data, &v); err != nil {
 			w.fail <- errors.Wrap(err, "json fail")
 			return
 		}
