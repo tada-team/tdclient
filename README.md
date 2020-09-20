@@ -33,10 +33,14 @@ For server with Active Directory authorization:
 go run examples/passwordauth/main.go
 ```
 
+### Contacts
+
+```go run examples/contacts/main.go -team <team uid> -token <token>```
+
 ### Messaging
 
 ```
-go run examples/message/main.go -team <team uid> -token <bot token> -chat <chat jid> -message <message text>
+go run examples/message/main.go -team <team uid> -token <token> -chat <chat jid> -message <message text>
 ```
 
 How to get team uid and chat jid:
@@ -46,6 +50,10 @@ How to get team uid and chat jid:
  * dbd248d7-25c2-4e8f-a23a-99baf63223e9 – team uid
  * g-dce6f5fd-b741-40a6-aa9c-c0e928d9dac5 – chat jid
 
-### Contacts
+### Simple bot
 
-```go run examples/contacts/main.go -team <team uid> -token <bot token>```
+Echobot: make response to every direct message.
+
+```
+go run examples/echobot/main.go -team <team uid> -token <token>
+```
