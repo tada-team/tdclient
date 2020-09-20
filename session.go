@@ -127,9 +127,7 @@ func (s Session) doRaw(method, path string, data, v interface{}) error {
 		return errors.Wrap(err, "read body fail")
 	}
 
-	if resp.StatusCode != 200 {
-		return errors.Wrapf(err, "status code: %d %s", resp.StatusCode, string(respData))
-	}
+	s.logger.Println("resp:", resp.StatusCode, string(respData))
 
 	if err := JSON.Unmarshal(respData, &v); err != nil {
 		return errors.Wrapf(err, "unmarshal fail on: %s", string(respData))

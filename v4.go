@@ -98,3 +98,25 @@ func (s Session) AuthBySmsGetToken(phone, code string) (tdapi.Auth, error) {
 
 	return resp.Result, nil
 }
+
+func (s Session) AuthByPasswordGetToken(login, password string) (tdapi.Auth, error) {
+	req := map[string]interface{}{
+		"login":    login,
+		"password": password,
+	}
+
+	resp := new(struct {
+		tdapi.Resp
+		Result tdapi.Auth `json:"result"`
+	})
+
+	if err := s.doPost("/api/v4/auth/password/get-token", req, resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
