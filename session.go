@@ -1,6 +1,8 @@
 package tdclient
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,11 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 )
-
-type apiResp struct {
-	Ok    bool   `json:"ok"`
-	Error string `json:"error"`
-}
 
 type Session struct {
 	Timeout  time.Duration
@@ -48,7 +45,7 @@ func NewSession(server string) (Session, error) {
 
 func (s *Session) Features() (*tdproto.Features, error) {
 	if s.features == nil {
-		if _, err := s.doGet("/features.json", &s.features); err != nil {
+		if err := s.doGet("/features.json", &s.features); err != nil {
 			return s.features, err
 		}
 	}
@@ -71,67 +68,6 @@ func (s *Session) SetVerbose(v bool) {
 	}
 }
 
-func (s Session) Ping() error {
-	resp := new(struct {
-		apiResp
-		Result string `json:"result"`
-	})
-	_, err := s.doGet("/api/v4/ping", resp)
-	return err
-}
-
-func (s Session) Me(teamUid string) (tdproto.Contact, error) {
-	resp := new(struct {
-		apiResp
-		Result tdproto.Team `json:"result"`
-	})
-
-	if !tdproto.ValidUid(teamUid) {
-		return tdproto.Contact{}, errors.New("invalid team uid")
-	}
-
-	b, err := s.doGet("/api/v4/teams/"+teamUid, resp)
-	if err != nil {
-		return tdproto.Contact{}, err
-	}
-
-	if err := JSON.Unmarshal(b, resp); err != nil {
-		return tdproto.Contact{}, errors.Wrap(err, "unmarshall fail")
-	}
-
-	if !resp.Ok {
-		return tdproto.Contact{}, errors.New(resp.Error)
-	}
-
-	return resp.Result.Me, nil
-}
-
-func (s Session) Contacts(teamUid string) ([]tdproto.Contact, error) {
-	resp := new(struct {
-		apiResp
-		Result []tdproto.Contact `json:"result"`
-	})
-
-	if !tdproto.ValidUid(teamUid) {
-		return resp.Result, errors.New("invalid team uid")
-	}
-
-	b, err := s.doGet("/api/v4/teams/"+teamUid+"/contacts/", resp)
-	if err != nil {
-		return resp.Result, err
-	}
-
-	if err := JSON.Unmarshal(b, resp); err != nil {
-		return resp.Result, errors.Wrap(err, "unmarshall fail")
-	}
-
-	if !resp.Ok {
-		return resp.Result, errors.New(resp.Error)
-	}
-
-	return resp.Result, nil
-}
-
 func (s Session) httpClient() *http.Client {
 	return &http.Client{
 		Timeout: s.Timeout,
@@ -146,14 +82,34 @@ func (s Session) url(path string) string {
 	return s.server.String()
 }
 
-func (s Session) doGet(path string, v interface{}) ([]byte, error) {
+func (s Session) doGet(path string, resp interface{}) error {
+	return s.doRaw("GET", path, nil, resp)
+}
+
+func (s Session) doPost(path string, data, v interface{}) error {
+	return s.doRaw("POST", path, data, v)
+}
+
+func (s Session) doRaw(method, path string, data, v interface{}) error {
 	client := s.httpClient()
 
 	path = s.url(path)
-	s.logger.Println("GET", path)
-	req, err := http.NewRequest("GET", path, nil)
+	s.logger.Println(method, path)
+
+	var buf *bytes.Buffer
+	if data == nil {
+		buf = bytes.NewBuffer([]byte{})
+	} else {
+		b, err := json.Marshal(data)
+		if err != nil {
+			return errors.Wrap(err, "json marshal fail")
+		}
+		buf = bytes.NewBuffer(b)
+	}
+
+	req, err := http.NewRequest(method, path, buf)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "new request fail")
+		return errors.Wrap(err, "new request fail")
 	}
 
 	if s.token != "" {
@@ -162,22 +118,22 @@ func (s Session) doGet(path string, v interface{}) ([]byte, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "client do fail")
+		return errors.Wrap(err, "client do fail")
 	}
 	defer resp.Body.Close()
 
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return respData, errors.Wrap(err, "read body fail")
+		return errors.Wrap(err, "read body fail")
 	}
 
 	if resp.StatusCode != 200 {
-		return respData, errors.Wrapf(err, "status code: %d %s", resp.StatusCode, string(respData))
+		return errors.Wrapf(err, "status code: %d %s", resp.StatusCode, string(respData))
 	}
 
 	if err := JSON.Unmarshal(respData, &v); err != nil {
-		return respData, errors.Wrapf(err, "unmarshal fail on: %s", string(respData))
+		return errors.Wrapf(err, "unmarshal fail on: %s", string(respData))
 	}
 
-	return respData, nil
+	return nil
 }

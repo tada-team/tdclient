@@ -2,51 +2,36 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"time"
 
 	"github.com/tada-team/tdclient"
+	"github.com/tada-team/tdclient/examples"
 	"github.com/tada-team/tdproto"
 )
 
 func main() {
-	server := flag.String("server", "https://web.tada.team", "server address")
-	team := flag.String("team", "", "team uid")
-	chat := flag.String("chat", "", "chat jid")
-	token := flag.String("token", "", "bot token. Type \"/newbot <NAME>\" command in @TadaBot direct chat")
 	message := flag.String("message", "test message", "message text")
-	verbose := flag.Bool("verbose", false, "verbose logging")
-	flag.Parse()
 
-	if *token == "" {
-		fmt.Println("-token required")
-		return
-	}
+	settings := examples.NewSettings()
+	settings.RequireTeam()
+	settings.RequireChat()
+	settings.RequireToken()
+	settings.Parse()
 
-	if *chat == "" {
-		fmt.Println("-chat required")
-		return
-	}
-
-	if *team == "" {
-		fmt.Println("-team required")
-		return
-	}
-
-	client, err := tdclient.NewSession(*server)
+	client, err := tdclient.NewSession(settings.Server)
 	if err != nil {
 		panic(err)
 	}
 
-	client.SetToken(*token)
-	client.SetVerbose(*verbose)
+	client.SetToken(settings.Token)
+	client.SetVerbose(settings.Verbose)
 
-	websocketConnection, err := client.Ws(*team, nil)
+	websocketConnection, err := client.Ws(settings.TeamUid, nil)
 	if err != nil {
 		panic(err)
 	}
 
-	recipient := *tdproto.NewJID(*chat)
+	recipient := *tdproto.NewJID(settings.Chat)
 
 	// composing like human. Full events list at https://github.com/tada-team/tdproto
 	websocketConnection.Send(tdproto.NewClientChatComposing(recipient, true, nil))
@@ -54,6 +39,12 @@ func main() {
 
 	// shortcut for simple messaging
 	websocketConnection.SendPlainMessage(recipient, *message)
+
+	// stop composing
+	websocketConnection.Send(tdproto.NewClientChatComposing(recipient, false, nil))
+	time.Sleep(3 * time.Second)
+
+	// stay online while message not sent
 	if _, err := websocketConnection.WaitForConfirm(); err != nil {
 		panic(err)
 	}

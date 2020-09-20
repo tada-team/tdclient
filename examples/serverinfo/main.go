@@ -1,23 +1,22 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 
 	"github.com/tada-team/tdclient"
+	"github.com/tada-team/tdclient/examples"
 )
 
 func main() {
-	server := flag.String("server", "https://web.tada.team", "server address")
-	verbose := flag.Bool("verbose", false, "verbose logging")
-	flag.Parse()
+	settings := examples.NewSettings()
+	settings.Parse()
 
-	client, err := tdclient.NewSession(*server)
+	client, err := tdclient.NewSession(settings.Server)
 	if err != nil {
 		panic(err)
 	}
 
-	client.SetVerbose(*verbose)
+	client.SetVerbose(settings.Verbose)
 	features, err := client.Features()
 	if err != nil {
 		panic(err)

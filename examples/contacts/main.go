@@ -1,44 +1,33 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 
 	"github.com/tada-team/tdclient"
+	"github.com/tada-team/tdclient/examples"
 )
 
 func main() {
-	server := flag.String("server", "https://web.tada.team", "server address")
-	team := flag.String("team", "", "team uid")
-	token := flag.String("token", "", "bot token. Type \"/newbot <NAME>\" command in @TadaBot direct chat")
-	verbose := flag.Bool("verbose", false, "verbose logging")
-	flag.Parse()
+	settings := examples.NewSettings()
+	settings.RequireTeam()
+	settings.RequireToken()
+	settings.Parse()
 
-	if *token == "" {
-		fmt.Println("-token required")
-		return
-	}
-
-	if *team == "" {
-		fmt.Println("-team required")
-		return
-	}
-
-	client, err := tdclient.NewSession(*server)
+	client, err := tdclient.NewSession(settings.Server)
 	if err != nil {
 		panic(err)
 	}
 
-	client.SetToken(*token)
-	client.SetVerbose(*verbose)
+	client.SetToken(settings.Token)
+	client.SetVerbose(settings.Verbose)
 
-	contacts, err := client.Contacts(*team)
+	contacts, err := client.Contacts(settings.TeamUid)
 	if err != nil {
 		panic(err)
 	}
 
+	// full fields list: https://github.com/tada-team/tdproto/blob/master/contact.go
 	for _, contact := range contacts {
-		// full fields list: https://github.com/tada-team/tdproto/blob/master/contact.go
-		fmt.Printf("%s\t%s\n", contact.Jid, contact.DisplayName)
+		fmt.Printf("%s\t%s\t%s\n", contact.TeamStatus, contact.Jid, contact.DisplayName)
 	}
 }
