@@ -1,6 +1,8 @@
 package tdclient
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 	"github.com/tada-team/tdproto/tdapi"
@@ -46,6 +48,27 @@ func (s Session) Contacts(teamUid string) ([]tdproto.Contact, error) {
 	}
 
 	if err := s.doGet("/api/v4/teams/"+teamUid+"/contacts/", resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
+func (s Session) AddContact(teamUid string, phone string) (tdproto.Contact, error) {
+	req := map[string]interface{}{
+		"phone": phone,
+	}
+
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.Contact `json:"result"`
+	})
+
+	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/contacts", teamUid), req, resp); err != nil {
 		return resp.Result, err
 	}
 

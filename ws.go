@@ -144,16 +144,16 @@ func (w *WsSession) WaitFor(name string, v interface{}) error {
 	}
 }
 
-func (w *WsSession) Send(e tdproto.Event) string {
-	w.outbox <- e
-	return e.GetConfirmId()
+func (w *WsSession) Send(event tdproto.Event) string {
+	w.outbox <- event
+	return event.GetConfirmId()
 }
 
 func (w *WsSession) outboxLoop() {
 	for !w.closed {
-		data := <-w.outbox
+		event := <-w.outbox
 
-		b, err := JSON.Marshal(data)
+		b, err := JSON.Marshal(event)
 		if err != nil {
 			w.fail <- errors.Wrap(err, "json marshal fail")
 			return
