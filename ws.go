@@ -149,6 +149,11 @@ func (w *WsSession) Send(event tdproto.Event) string {
 	return event.GetConfirmId()
 }
 
+func (w *WsSession) Close() error {
+	w.closed = true
+	return w.conn.Close()
+}
+
 func (w *WsSession) outboxLoop() {
 	for !w.closed {
 		event := <-w.outbox
