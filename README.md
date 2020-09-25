@@ -1,8 +1,12 @@
 # tdclient
-
 Simple client library.
 
-### First example: get server version
+## Feedback
+Join team: https://web.tada.team/api/v3/join/nWqYT1DgHnsS08pck1l9eq4ELVgVCm7q6xTxtHEVnu
+
+## Examples
+
+### Get server version
 
 ```
 go run examples/serverinfo/main.go
