@@ -94,12 +94,13 @@ func (s Session) doRaw(method, path string, data, v interface{}) error {
 	client := s.httpClient()
 
 	path = s.url(path)
-	s.logger.Println(method, path)
 
 	var buf *bytes.Buffer
 	if data == nil {
+		s.logger.Println(method, path)
 		buf = bytes.NewBuffer([]byte{})
 	} else {
+		s.logger.Println(method, path, debugJSON(v))
 		b, err := json.Marshal(data)
 		if err != nil {
 			return errors.Wrap(err, "json marshal fail")
@@ -127,11 +128,11 @@ func (s Session) doRaw(method, path string, data, v interface{}) error {
 		return errors.Wrap(err, "read body fail")
 	}
 
-	s.logger.Println("resp:", resp.StatusCode, string(respData))
-
 	if err := JSON.Unmarshal(respData, &v); err != nil {
 		return errors.Wrapf(err, "unmarshal fail on: %s", string(respData))
 	}
+
+	s.logger.Println(debugJSON(v))
 
 	return nil
 }
