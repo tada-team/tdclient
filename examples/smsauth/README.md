@@ -35,7 +35,7 @@ POST `https://web.tada.team/api/v4/auth/sms/get-token`
 ```
 
 Sample response:
-```json
+```json5
 {
     "_time": "63ms",
     "ok": true,
