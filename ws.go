@@ -94,8 +94,7 @@ func (w *WsSession) DeleteMessage(uid string) string {
 
 func (w *WsSession) WaitForMessage() (tdproto.Message, bool, error) {
 	v := new(tdproto.ServerMessageUpdated)
-	err := w.WaitFor("server.message.updated", &v)
-	if err != nil {
+	if err := w.WaitFor("server.message.updated", &v); err != nil {
 		return tdproto.Message{}, false, err
 	}
 	return v.Params.Messages[0], v.Params.Delayed, nil
@@ -103,8 +102,7 @@ func (w *WsSession) WaitForMessage() (tdproto.Message, bool, error) {
 
 func (w *WsSession) WaitForConfirm() (string, error) {
 	v := new(tdproto.ServerConfirm)
-	err := w.WaitFor("server.confirm", v)
-	if err != nil {
+	if err := w.WaitFor("server.confirm", v); err != nil {
 		return "", err
 	}
 	return v.Params.ConfirmId, nil

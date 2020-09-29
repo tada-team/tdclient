@@ -35,6 +35,7 @@ func NewSession(server string) (Session, error) {
 	if err != nil {
 		return Session{}, err
 	}
+
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return Session{}, fmt.Errorf("invalid scheme: %s", u.Scheme)
 	}

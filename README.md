@@ -44,7 +44,7 @@ go run examples/passwordauth/main.go
 ### Messaging
 
 ```
-go run examples/message/main.go -team <team uid> -token <token> -chat <chat jid> -message <message text>
+go run examples/send-message/main.go -team <team uid> -token <token> -chat <chat jid> -message <message text>
 ```
 
 How to get team uid and chat jid:

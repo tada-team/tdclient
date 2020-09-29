@@ -1,4 +1,4 @@
-## Sample
+## Server information
 GET `https://web.tada.team/features.json`
 ```json
 {
