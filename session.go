@@ -101,7 +101,7 @@ func (s Session) doRaw(method, path string, data, v interface{}) error {
 		s.logger.Println(method, path)
 		buf = bytes.NewBuffer([]byte{})
 	} else {
-		s.logger.Println(method, path, debugJSON(v))
+		s.logger.Println(method, path, debugJSON(data))
 		b, err := json.Marshal(data)
 		if err != nil {
 			return errors.Wrap(err, "json marshal fail")

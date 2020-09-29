@@ -47,6 +47,8 @@ github.com/tada-team/tdproto v0.2.1 h1:uCHXKzoETO1lvbpO9WEmgqhSp+PBmlxF+08m4cDUN
 github.com/tada-team/tdproto v0.2.1/go.mod h1:eQGUKL2y6C9EGrhOZY0HU7bb/5lBdVfHBlx2+e0l7x4=
 github.com/tada-team/tdproto v1.2.0 h1:/JgP9RGDlHtmS20q9RCCxKFhzPwWgWdVeCcMqiwbtuM=
 github.com/tada-team/tdproto v1.2.0/go.mod h1:5kJ3cQ5igf9tQoJR+v2Q6TxzfpOT2Q9I0DfKzlVUj0c=
+github.com/tada-team/tdproto v1.2.8 h1:uxLb8bWlLds1eEYsgEUmEtRbO8abvDHVQv2IAWqhN9o=
+github.com/tada-team/tdproto v1.2.8/go.mod h1:cuT572dAExhZW7lUkVz23ijVyszgNN7KyKpE7OyWT88=
 golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b h1:MQE+LT/ABUuuvEZ+YQAMSXindAdUh7slEmAkup74op4=
 golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

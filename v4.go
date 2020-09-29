@@ -3,6 +3,8 @@ package tdclient
 import (
 	"fmt"
 
+	uuid "github.com/satori/go.uuid"
+
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 	"github.com/tada-team/tdproto/tdapi"
@@ -134,6 +136,28 @@ func (s Session) AuthByPasswordGetToken(login, password string) (tdapi.Auth, err
 	})
 
 	if err := s.doPost("/api/v4/auth/password/get-token", req, resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
+func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text string) (tdproto.Message, error) {
+	req := new(tdapi.Message)
+	req.Mediatype = tdproto.MediatypePlain
+	req.Text = text
+	req.MessageUid = uuid.NewV4().String()
+
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.Message `json:"result"`
+	})
+
+	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/chats/%s/messages", teamUid, chat), req, resp); err != nil {
 		return resp.Result, err
 	}
 
