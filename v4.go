@@ -3,8 +3,7 @@ package tdclient
 import (
 	"fmt"
 
-	uuid "github.com/satori/go.uuid"
-
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 	"github.com/tada-team/tdproto/tdapi"
@@ -151,7 +150,7 @@ func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text str
 	req.Mediatype = tdproto.MediatypePlain
 	req.Text = text
 
-	req.MessageUid = uuid.NewV4().String()
+	req.MessageUid = uuid.New().String()
 
 	resp := new(struct {
 		tdapi.Resp
