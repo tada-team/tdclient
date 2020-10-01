@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 	"github.com/tada-team/tdproto"
 )
 
@@ -76,7 +76,7 @@ func (w *WsSession) Ping() string {
 }
 
 func (w *WsSession) SendPlainMessage(to tdproto.JID, text string) string {
-	uid := uuid.New().String()
+	uid := uuid.NewV4().String()
 	w.Send(tdproto.NewClientMessageUpdated(tdproto.ClientMessageUpdatedParams{
 		MessageId: uid,
 		To:        to,

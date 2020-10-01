@@ -3,7 +3,6 @@ module github.com/tada-team/tdclient
 go 1.14
 
 require (
-	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2
 	github.com/json-iterator/go v1.1.10
 	github.com/manifoldco/promptui v0.7.0

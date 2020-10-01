@@ -150,6 +150,7 @@ func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text str
 	req := new(tdapi.Message)
 	req.Mediatype = tdproto.MediatypePlain
 	req.Text = text
+
 	req.MessageUid = uuid.NewV4().String()
 
 	resp := new(struct {
