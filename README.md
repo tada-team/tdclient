@@ -4,11 +4,42 @@ Simple client library.
 ## Feedback
 Join team: https://web.tada.team/api/v3/join/nWqYT1DgHnsS08pck1l9eq4ELVgVCm7q6xTxtHEVnu
 
-## Examples
+### Example
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"sync"
+	"github.com/tada-team/tdclient"
+)
+
+func main() {
+	session, err := tdclient.NewSession("https://web.tada.team")
+	if err != nil {
+		panic(err)
+	}
+
+	session.SetToken("YOUR_TOKEN")
+	session.SetVerbose(true)
+	if err := session.Ping(); err != nil {
+		panic(err)
+	}
+
+	_, err := session.AddContact("TEAM_UID", "+70000000000")
+	if err != nil {
+		panic(err)
+	}
+}
+
+```
+
+## Snippets
 
 ### Get server version
 
-```
+```bash
 go run examples/serverinfo/main.go
 go run examples/serverinfo/main.go -verbose
 go run examples/serverinfo/main.go -verbose -server https://demo.tada.team
