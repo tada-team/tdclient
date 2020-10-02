@@ -10,9 +10,8 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"sync"
 	"github.com/tada-team/tdclient"
+	"github.com/tada-team/tdproto/tdapi"
 )
 
 func main() {
@@ -21,16 +20,40 @@ func main() {
 		panic(err)
 	}
 
+    // Create new bot (/newbot command) or use examples/smsauth to get own account token
 	session.SetToken("YOUR_TOKEN")
-	session.SetVerbose(true)
+
+    // How to see team_uid: https://web.tada.team/{team_uid}/chats/{chat_jid}
+    teamUid := "YOUR_TEAM_UID" 
+	
+    // show all requests/responses
+    session.SetVerbose(true)
+ 
+    // Check connection
 	if err := session.Ping(); err != nil {
 		panic(err)
 	}
-
-	_, err := session.AddContact("TEAM_UID", "+70000000000")
+    
+    // Invite new member to your team
+    phone := "+70001234567"
+	contact, err := session.AddContact(teamUid, phone)
 	if err != nil {
 		panic(err)
 	}
+    fmt.Println("contact created:", contact.Jid)
+    
+    // Send hello to direct
+    msg, err := session.SendPlaintextMessage(teamUid, contact.Jid, "Hi there!") 
+    fmt.Println("message sent at:", msg.Created)
+    
+    // Create new task. All Fields: https://github.com/tada-team/tdproto/blob/master/tdapi/task.go
+    taskChat, err := session.CreateTask(teamUid, tdapi.Task{
+		Description: "do it, do it now",
+		Assignee:    contact.Jid,
+		Public:      true, // task visible for all team members
+	}) 
+    fmt.Println("task created:", taskChat.Jid)
+
 }
 
 ```
