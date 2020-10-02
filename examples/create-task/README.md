@@ -1,4 +1,4 @@
-## Message sending without websockets
+## Task creation
 
 POST `https://web.tada.team/api/v4/teams/<team-uid>/chats/<chat-jid>/messages`
 ```json

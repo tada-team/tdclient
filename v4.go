@@ -3,8 +3,7 @@ package tdclient
 import (
 	"fmt"
 
-	uuid "github.com/satori/go.uuid"
-
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 	"github.com/tada-team/tdproto/tdapi"
@@ -150,7 +149,8 @@ func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text str
 	req := new(tdapi.Message)
 	req.Mediatype = tdproto.MediatypePlain
 	req.Text = text
-	req.MessageUid = uuid.NewV4().String()
+
+	req.MessageUid = uuid.New().String()
 
 	resp := new(struct {
 		tdapi.Resp
@@ -158,6 +158,23 @@ func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text str
 	})
 
 	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/chats/%s/messages", teamUid, chat), req, resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
+func (s Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, error) {
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.Chat `json:"result"`
+	})
+
+	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/tasks", teamUid), req, resp); err != nil {
 		return resp.Result, err
 	}
 

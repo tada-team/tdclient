@@ -76,13 +76,13 @@ go run examples/passwordauth/main.go
 
 Using websockets:
 ```
-go run examples/send-message/main.go -team <team uid> -token <token> -chat <chat jid> -message <message text>
+go run examples/send-message-ws/main.go -team <team uid> -token <token> -chat <chat jid> -message <message text>
 ```
 or
 
 Using http API only:
 ```
-go run examples/send-message-http/main.go -team <team uid> -token <token> -chat <chat jid> -message <message text>
+go run examples/send-message/main.go -team <team uid> -token <token> -chat <chat jid> -message <message text>
 ```
 
 How to get team uid and chat jid:
