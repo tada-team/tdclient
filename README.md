@@ -15,13 +15,13 @@ import (
 )
 
 func main() {
-	session, err := tdclient.NewSession("https://web.tada.team")
-	if err != nil {
-		panic(err)
-	}
+    session, err := tdclient.NewSession("https://web.tada.team")
+    if err != nil {
+       panic(err)
+    }
 
     // Create new bot (/newbot command) or use examples/smsauth to get own account token
-	session.SetToken("YOUR_TOKEN")
+    session.SetToken("YOUR_TOKEN")
 
     // How to see team_uid: https://web.tada.team/{team_uid}/chats/{chat_jid}
     teamUid := "YOUR_TEAM_UID" 
@@ -30,16 +30,16 @@ func main() {
     session.SetVerbose(true)
  
     // Check connection
-	if err := session.Ping(); err != nil {
-		panic(err)
-	}
+    if err := session.Ping(); err != nil {
+        panic(err)
+    }
     
     // Invite new member to your team
     phone := "+70001234567"
-	contact, err := session.AddContact(teamUid, phone)
-	if err != nil {
-		panic(err)
-	}
+    contact, err := session.AddContact(teamUid, phone)
+    if err != nil {
+        panic(err)
+    }
     fmt.Println("contact created:", contact.Jid)
     
     // Send hello to direct
@@ -48,12 +48,11 @@ func main() {
     
     // Create new task. All Fields: https://github.com/tada-team/tdproto/blob/master/tdapi/task.go
     taskChat, err := session.CreateTask(teamUid, tdapi.Task{
-		Description: "do it, do it now",
-		Assignee:    contact.Jid,
-		Public:      true, // task visible for all team members
-	}) 
+        Description: "do it, do it now",
+        Assignee:    contact.Jid,
+        Public:      true, // task visible for all team members
+    }) 
     fmt.Println("task created:", taskChat.Jid)
-
 }
 
 ```
@@ -82,29 +81,31 @@ Allowed for team admin only.
 #### Token from your personal account
 
 For server with sms authorization:
-```
+```bash
 go run examples/smsauth/main.go
 ```
 
 For server with Active Directory authorization:
-```
+```bash
 go run examples/passwordauth/main.go
 ```
 
 ### Contacts
 
-```go run examples/contacts/main.go -team <team uid> -token <token>```
+```bash
+go run examples/contacts/main.go -team <team uid> -token <token>
+```
 
 ### Messaging
 
 Using websockets:
-```
+```bash
 go run examples/send-message-ws/main.go -team <team uid> -token <token> -chat <chat jid> -message <message text>
 ```
 or
 
 Using http API only:
-```
+```bash
 go run examples/send-message/main.go -team <team uid> -token <token> -chat <chat jid> -message <message text>
 ```
 
@@ -119,6 +120,6 @@ How to get team uid and chat jid:
 
 Echobot: make response to every direct message.
 
-```
+```bash
 go run examples/echobot/main.go -team <team uid> -token <token>
 ```
