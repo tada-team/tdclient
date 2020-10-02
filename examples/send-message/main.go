@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"time"
+	"fmt"
 
 	"github.com/tada-team/tdclient"
 	"github.com/tada-team/tdclient/examples"
@@ -26,26 +26,12 @@ func main() {
 	client.SetToken(settings.Token)
 	client.SetVerbose(settings.Verbose)
 
-	websocketConnection, err := client.Ws(settings.TeamUid, nil)
+	recipient := *tdproto.NewJID(settings.Chat)
+
+	msg, err := client.SendPlaintextMessage(settings.TeamUid, recipient, *message)
 	if err != nil {
 		panic(err)
 	}
 
-	recipient := *tdproto.NewJID(settings.Chat)
-
-	// composing like human. Full events list at https://github.com/tada-team/tdproto
-	websocketConnection.Send(tdproto.NewClientChatComposing(recipient, true, nil))
-	time.Sleep(3 * time.Second)
-
-	// shortcut for simple messaging
-	websocketConnection.SendPlainMessage(recipient, *message)
-
-	// stop composing
-	websocketConnection.Send(tdproto.NewClientChatComposing(recipient, false, nil))
-	time.Sleep(3 * time.Second)
-
-	// stay online while message not sent
-	if _, err := websocketConnection.WaitForConfirm(); err != nil {
-		panic(err)
-	}
+	fmt.Printf("message created: %s\n", msg.Created)
 }
