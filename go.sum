@@ -46,6 +46,8 @@ github.com/tada-team/kozma v1.1.0 h1:BGwxSK43Dpr6wKoXVTVbdfoTFTptOEhxmni6aCOreJU
 github.com/tada-team/kozma v1.1.0/go.mod h1:TIsa1b64SsrVPFEqdoJDnMhO3HYFVpN0B0t2GKh93uY=
 github.com/tada-team/tdproto v1.2.8 h1:uxLb8bWlLds1eEYsgEUmEtRbO8abvDHVQv2IAWqhN9o=
 github.com/tada-team/tdproto v1.2.8/go.mod h1:cuT572dAExhZW7lUkVz23ijVyszgNN7KyKpE7OyWT88=
+github.com/tada-team/tdproto v1.3.1 h1:b87DRc4uacYkvKm1FPsK3F4gRFQRDQD/plJeSYKt7fQ=
+github.com/tada-team/tdproto v1.3.1/go.mod h1:cuT572dAExhZW7lUkVz23ijVyszgNN7KyKpE7OyWT88=
 golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b h1:MQE+LT/ABUuuvEZ+YQAMSXindAdUh7slEmAkup74op4=
 golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=

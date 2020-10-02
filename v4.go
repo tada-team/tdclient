@@ -167,3 +167,20 @@ func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text str
 
 	return resp.Result, nil
 }
+
+func (s Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, error) {
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.Chat `json:"result"`
+	})
+
+	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/tasks", teamUid), req, resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
