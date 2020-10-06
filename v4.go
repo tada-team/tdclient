@@ -123,9 +123,9 @@ func (s Session) AuthBySmsGetToken(phone, code string) (tdapi.Auth, error) {
 	return resp.Result, nil
 }
 
-func (s Session) AuthByPasswordGetToken(login, password string) (tdapi.Auth, error) {
+func (s Session) AuthByPasswordGetToken(username, password string) (tdapi.Auth, error) {
 	req := map[string]interface{}{
-		"login":    login,
+		"username": username,
 		"password": password,
 	}
 
