@@ -196,7 +196,7 @@ func (s Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdp
 		Result tdproto.Chat `json:"result"`
 	})
 
-	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/groups/%s", teamUid, group), req, resp); err != nil {
+	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/groups/%s/members", teamUid, group), req, resp); err != nil {
 		return resp.Result, err
 	}
 
