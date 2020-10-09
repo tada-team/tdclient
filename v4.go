@@ -124,7 +124,7 @@ func (s Session) AuthBySmsGetToken(phone, code string) (tdapi.Auth, error) {
 }
 
 func (s Session) AuthByPasswordGetToken(username, password string) (tdapi.Auth, error) {
-	req := map[string]interface{}{
+	req := map[string]string{
 		"username": username,
 		"password": password,
 	}
@@ -175,6 +175,28 @@ func (s Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, error
 	})
 
 	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/tasks", teamUid), req, resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
+func (s Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdproto.Chat, error) {
+	req := map[string]interface{}{
+		"jid":    contact.String(),
+		"status": tdproto.GroupMember,
+	}
+
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.Chat `json:"result"`
+	})
+
+	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/groups/%s", teamUid, group), req, resp); err != nil {
 		return resp.Result, err
 	}
 
