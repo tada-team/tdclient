@@ -203,6 +203,50 @@ func (s Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdp
 	if !resp.Ok {
 		return resp.Result, resp.Error
 	}
-
 	return resp.Result, nil
+}
+
+func (s Session) GroupMembers(teamUid string, groupUid string) ([]tdproto.GroupMembership, error) {
+	type MembersParams struct {
+		Members []tdproto.GroupMembership `json:"members"`
+	}
+	resp := new(struct {
+		tdapi.Resp
+		Result MembersParams `json:"result"`
+	})
+
+	if !tdproto.ValidUid(teamUid) {
+		return resp.Result.Members, errors.New("invalid team uid")
+	}
+
+	if err := s.doGet("/api/v4/teams/"+teamUid+"/groups/"+groupUid+"/members", resp); err != nil {
+		return resp.Result.Members, err
+	}
+
+	if !resp.Ok {
+		return resp.Result.Members, resp.Error
+	}
+
+	return resp.Result.Members, nil
+}
+
+func (s Session) DropGroupMember(teamUid string, groupUid string, contactUid string) error {
+	type MembersParams struct {
+		Members []tdproto.GroupMembership `json:"members"`
+	}
+	resp := new(tdapi.Resp)
+
+	if !tdproto.ValidUid(teamUid) {
+		return errors.New("invalid team uid")
+	}
+
+	if err := s.doDelete("/api/v4/teams/"+teamUid+"/groups/"+groupUid+"/members/"+contactUid, resp); err != nil {
+		return err
+	}
+
+	if !resp.Ok {
+		return resp.Error
+	}
+
+	return nil
 }

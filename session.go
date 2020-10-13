@@ -91,6 +91,10 @@ func (s Session) doPost(path string, data, v interface{}) error {
 	return s.doRaw("POST", path, data, v)
 }
 
+func (s Session) doDelete(path string, resp interface{}) error {
+	return s.doRaw("DELETE", path, nil, resp)
+}
+
 func (s Session) doRaw(method, path string, data, v interface{}) error {
 	client := s.httpClient()
 
