@@ -32,10 +32,10 @@ Sample response:
         "notifications_enabled": true,
         "last_message": {
             "content": {
-                "text": "Создана задача для @+7_(555)_000-0002: task title",
+                "text": "Created task for @username: task title",
                 "type": "change",
                 "subtype": "newtask",
-                "title": "Создана задача для @+7_(555)_000-0002: task title",
+                "title": "Created task for @username: task title",
                 "actor": "d-2788a2c0-be47-4b95-8a7d-889b599b7bfd"
             },
             "push_text": "Создана задача для @username: task title",
@@ -48,7 +48,7 @@ Sample response:
             "chat": "t-04203bbd-ee5f-4d3c-b1b9-2126d88c10a5",
             "links": [
                 {
-                    "pattern": "@+7_(555)_000-0002",
+                    "pattern": "@username",
                     "url": "tadateam://d-e0c6ee1e-3db9-4e48-abb3-7dcb98cdc5e8",
                     "text": "@username"
                 }
