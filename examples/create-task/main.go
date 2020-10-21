@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/tada-team/tdproto/tdapi"
 
@@ -13,13 +14,23 @@ import (
 
 func main() {
 	assignee := flag.String("assignee", "", "assignee jid")
-	description := flag.String("description", "test task", "task text")
+	description := flag.String("description", "", "task text")
 	public := flag.Bool("public", false, "public")
 
 	settings := examples.NewSettings()
 	settings.RequireTeam()
 	settings.RequireToken()
 	settings.Parse()
+
+	if *assignee == "" {
+		fmt.Println("-assignee required")
+		os.Exit(0)
+	}
+
+	if *description == "" {
+		fmt.Println("-description required")
+		os.Exit(0)
+	}
 
 	client, err := tdclient.NewSession(settings.Server)
 	if err != nil {
