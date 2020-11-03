@@ -8,35 +8,49 @@ import (
 	"github.com/tada-team/tdproto"
 )
 
-type settings struct {
-	Server       string
-	Verbose      bool
-	TeamUid      string
-	Chat         string
-	Token        string
-	requireTeam  bool
-	requireChat  bool
-	requireToken bool
+type Settings struct {
+	Server        string
+	Verbose       bool
+	TeamUid       string
+	Chat          string
+	Token         string
+	DryRun        bool
+	Deep          int
+	requireTeam   bool
+	requireChat   bool
+	requireToken  bool
+	requireDryRun bool
+	requireDeep   int
 }
 
-func NewSettings() settings { return settings{} }
+func NewSettings() Settings { return Settings{} }
 
-func (s *settings) RequireTeam() {
+func (s *Settings) RequireTeam() {
 	flag.StringVar(&s.TeamUid, "team", "", "team uid")
 	s.requireTeam = true
 }
 
-func (s *settings) RequireChat() {
+func (s *Settings) RequireChat() {
 	flag.StringVar(&s.Chat, "chat", "", "chat jid")
 	s.requireChat = true
 }
 
-func (s *settings) RequireToken() {
+func (s *Settings) RequireToken() {
 	flag.StringVar(&s.Token, "token", "", "bot or user token")
 	s.requireToken = true
 }
 
-func (s *settings) Parse() {
+func (s *Settings) RequireDryRun() {
+	flag.BoolVar(&s.DryRun, "dryrun", false, "read or del pull")
+	s.requireDryRun = true
+}
+
+func (s *Settings) RequireDeep() {
+	flag.IntVar(&s.Deep, "deep", 5, "only")
+	s.requireDryRun = true
+}
+
+func (s *Settings) Parse() {
 	flag.StringVar(&s.Server, "server", "https://web.tada.team", "server address")
 	flag.BoolVar(&s.Verbose, "verbose", false, "verbose logging")
 	flag.Parse()
