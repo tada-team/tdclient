@@ -203,7 +203,7 @@ func (s Session) DeleteMessage(teamUid string, chat tdproto.JID, MsgId string) (
 	return resp.Result, nil
 }
 
-func (s Session) GetMessagesOldMsg(teamUid string, chat tdproto.JID, lastMsgId string) (tdproto.ChatMessages, error) {
+func (s Session) GetOldMessagesFrom(teamUid string, chat tdproto.JID, lastMsgId string) (tdproto.ChatMessages, error) {
 
 	param := map[string]string{}
 	param["old_from"] = lastMsgId

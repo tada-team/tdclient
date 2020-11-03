@@ -10,31 +10,31 @@ import (
 	"github.com/tada-team/tdproto"
 )
 
-var allMsg = make(map[string]string)
-var resultPull = make(map[string]string)
+var messageMap = make(map[string]string)
+var blackValue = make(map[string]string)
 
 func getLastMessageId(messages tdproto.ChatMessages) string {
 	return messages.Messages[len(messages.Messages)-1].MessageId
 }
 
-func setMessageMap(messages tdproto.ChatMessages){
+func messageMapUpdate(messages tdproto.ChatMessages) {
 	for key := range messages.Messages {
-		allMsg[messages.Messages[key].MessageId] = messages.Messages[key].Content.Text
+		messageMap[messages.Messages[key].MessageId] = messages.Messages[key].Content.Text
 	}
 }
 
-func filterMessages(){
-	for key := range allMsg {
-		var text = allMsg[key]
+func filterMessages() {
+	for key := range messageMap {
+		var text = messageMap[key]
 		s := strings.Split(text, ":")[0]
 
 		if s == "Удалён участник" {
-			resultPull[key] = text
+			blackValue[key] = text
 		}
 	}
 }
 
-func er(err error){
+func er(err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -60,39 +60,43 @@ func main() {
 	messages, err := client.GetMessages(settings.TeamUid, chatUid)
 	er(err)
 
-	setMessageMap(messages)
+	messageMapUpdate(messages)
 	var lastMsgId = getLastMessageId(messages)
 
 	for i := 1; i < settings.Deep; i++ {
-		messagesOld, err := client.GetMessagesOldMsg(settings.TeamUid, chatUid, lastMsgId)
+		fmt.Println("Загружаем страницу", i, lastMsgId)
+		messagesOld, err := client.GetOldMessagesFrom(settings.TeamUid, chatUid, lastMsgId)
 		er(err)
+		fmt.Println("На странице", len(messagesOld.Messages))
 
 		lastMsgId = getLastMessageId(messagesOld)
-		setMessageMap(messagesOld)
+		messageMapUpdate(messagesOld)
 	}
 
+	fmt.Println("Сообщений всего загружено", len(messageMap))
 	filterMessages()
+	fmt.Println("Кандидатов на удаление", len(blackValue))
 
-	if len(resultPull) > 0 {
+	if len(blackValue) > 0 {
 		websocketConnection, err := client.Ws(settings.TeamUid, nil)
 		er(err)
 
-		for key := range resultPull {
+		for key := range blackValue {
 			if settings.DryRun {
-				fmt.Printf("сообщение %s будет удалено (dryrun) [%s]", key, resultPull[key])
-			}else{
+				fmt.Println("сообщение будет удалено (dryrun) ", key, blackValue[key])
+			} else {
 				websocketConnection.DeleteMessage(key)
-				time.Sleep(3 * time.Second)
-
-				fmt.Printf("сообщение %s удалено [%s]", key, resultPull[key])
+				time.Sleep(100 * time.Millisecond)
+				fmt.Println("сообщение удалено ", key, blackValue[key])
 
 				_, err := websocketConnection.WaitForConfirm()
 				er(err)
 			}
 
 		}
-		websocketConnection.Close()
-	}else{
+		err = websocketConnection.Close()
+		er(err)
+	} else {
 		fmt.Println("Нет системных сообщений для удаления")
 	}
 }
