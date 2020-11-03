@@ -147,7 +147,7 @@ func (s Session) AuthByPasswordGetToken(username, password string) (tdapi.Auth, 
 
 func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text string) (tdproto.Message, error) {
 	req := new(tdapi.Message)
-	req.Mediatype = tdproto.MediatypePlain
+	req.Type = tdproto.MediatypePlain
 	req.Text = text
 
 	req.MessageUid = uuid.New().String()
