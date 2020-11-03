@@ -32,7 +32,7 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 	}
 
 	w := &WsSession{
-		Session: s,
+		session: s,
 		team:    team,
 		conn:    conn,
 		inbox:   make(chan serverEvent, 100),
@@ -62,13 +62,13 @@ type serverEvent struct {
 }
 
 type WsSession struct {
-	*Session
-	team   string
-	conn   *websocket.Conn
-	closed bool
-	inbox  chan serverEvent
-	outbox chan tdproto.Event
-	fail   chan error
+	session *Session
+	team    string
+	conn    *websocket.Conn
+	closed  bool
+	inbox   chan serverEvent
+	outbox  chan tdproto.Event
+	fail    chan error
 }
 
 func (w *WsSession) Ping() string {
@@ -113,7 +113,7 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 	for {
 		select {
 		case ev := <-w.inbox:
-			w.logger.Println("got:", string(ev.raw))
+			w.session.logger.Println("got:", string(ev.raw))
 			switch ev.name {
 			case name:
 				if err := JSON.Unmarshal(ev.raw, &v); err != nil {
@@ -137,7 +137,7 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 				w.fail <- fmt.Errorf("server panic: %s", t.Params.Code)
 				return nil
 			}
-		case <-time.After(w.Timeout):
+		case <-time.After(w.session.Timeout):
 			return Timeout
 		}
 	}
@@ -163,7 +163,7 @@ func (w *WsSession) outboxLoop() {
 			return
 		}
 
-		w.logger.Println("send:", string(b))
+		w.session.logger.Println("send:", string(b))
 		if err := w.conn.WriteMessage(websocket.BinaryMessage, b); err != nil {
 			w.fail <- errors.Wrap(err, "ws client fail")
 			return

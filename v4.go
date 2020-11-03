@@ -231,13 +231,10 @@ func (s Session) GroupMembers(teamUid string, groupUid string) ([]tdproto.GroupM
 }
 
 func (s Session) DropGroupMember(teamUid string, groupUid string, contactUid string) error {
-	type MembersParams struct {
-		Members []tdproto.GroupMembership `json:"members"`
-	}
 	resp := new(tdapi.Resp)
 
 	if !tdproto.ValidUid(teamUid) {
-		return errors.New("invalid team uid")
+		return InvalidTeamUid
 	}
 
 	if err := s.doDelete("/api/v4/teams/"+teamUid+"/groups/"+groupUid+"/members/"+contactUid, resp); err != nil {

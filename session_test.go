@@ -3,6 +3,10 @@ package tdclient
 import (
 	"os"
 	"testing"
+
+	"github.com/tada-team/kozma"
+
+	"github.com/tada-team/tdproto"
 )
 
 func TestSession(t *testing.T) {
@@ -33,20 +37,66 @@ func TestSession(t *testing.T) {
 		t.Fatalf("invalid teams number: %d", len(tokenResp.Me.Teams))
 	}
 
+	me := tokenResp.Me
 	c.SetToken(tokenResp.Token)
 
-	anyTeam := tokenResp.Me.Teams[0]
+	anyTeam := me.Teams[0]
+	contacts, err := c.Contacts(anyTeam.Uid)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var anyCoworker tdproto.Contact
+	for _, contact := range contacts {
+		if contact.CanSendMessage != nil && *contact.CanSendMessage {
+			anyCoworker = contact
+			break
+		}
+	}
+	if anyCoworker.Jid.Empty() {
+		t.Error("coworker not fouind in contacts")
+	}
+
 	ws, err := c.Ws(anyTeam.Uid, func(err error) {
 		t.Fatal(err)
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer ws.Close()
 
-	confirmId := ws.Ping()
-	if confirmId == "" {
-		t.Error("invalid confirm id")
-	}
+	t.Run("ping", func(t *testing.T) {
+		confirmId := ws.Ping()
+		ev := new(tdproto.ServerConfirm)
+		if err := ws.WaitFor(ev); err != nil {
+			t.Fatal(err)
+		}
+		if ev.ConfirmId != confirmId {
+			t.Error("confirmId mismatched")
+		}
+	})
+
+	t.Run("create message", func(t *testing.T) {
+		messageUid := ws.SendPlainMessage(anyCoworker.Jid, kozma.Say())
+		msg, _, err := ws.WaitForMessage()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if msg.MessageId != messageUid {
+			t.Fatal("invalid message uid")
+		}
+
+		t.Run("delete message", func(t *testing.T) {
+			ws.DeleteMessage(messageUid)
+			msg, _, err := ws.WaitForMessage()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if msg.MessageId != messageUid {
+				t.Fatal("invalid message uid")
+			}
+		})
+	})
 }
 
 func mustEnv(key string) string {
