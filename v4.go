@@ -213,7 +213,7 @@ func (s Session) GetMessagesOldMsg(teamUid string, chat tdproto.JID, lastMsgId s
 		Result tdproto.ChatMessages `json:"result"`
 	})
 
-	if err := s.doGetParams(fmt.Sprintf("/api/v4/teams/%s/messages/%s", teamUid, chat), resp, param); err != nil {
+	if err := s.doGetParams(fmt.Sprintf("/api/v4/teams/%s/messages/%s", teamUid, chat), param, resp); err != nil {
 		return resp.Result, err
 	}
 

@@ -10,11 +10,37 @@ import (
 	"github.com/tada-team/tdproto"
 )
 
+var allMsg = make(map[string]string)
+var resultPull = make(map[string]string)
+
+func getLastMessageId(messages tdproto.ChatMessages) string {
+	return messages.Messages[len(messages.Messages)-1].MessageId
+}
+
+func setMessageMap(messages tdproto.ChatMessages){
+	for key := range messages.Messages {
+		allMsg[messages.Messages[key].MessageId] = messages.Messages[key].Content.Text
+	}
+}
+
+func filterMessages(){
+	for key := range allMsg {
+		var text = allMsg[key]
+		s := strings.Split(text, ":")[0]
+
+		if s == "Удалён участник" {
+			resultPull[key] = text
+		}
+	}
+}
+
+func er(err error){
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
-
-	result_pull := make(map[string]string)
-	all_msg := make(map[string]string)
-
 	settings := examples.NewSettings()
 	settings.RequireToken()
 	settings.RequireTeam()
@@ -24,9 +50,7 @@ func main() {
 	settings.Parse()
 
 	client, err := tdclient.NewSession(settings.Server)
-	if err != nil {
-		panic(err)
-	}
+	er(err)
 
 	client.SetToken(settings.Token)
 	client.SetVerbose(settings.Verbose)
@@ -34,64 +58,41 @@ func main() {
 	chatUid := *tdproto.NewJID(settings.Chat)
 
 	messages, err := client.GetMessages(settings.TeamUid, chatUid)
-	if err != nil {
-		panic(err)
-	}
+	er(err)
 
-	for key := range messages.Messages {
-		all_msg[messages.Messages[key].MessageId] = messages.Messages[key].Content.Text
-	}
-
-	var lastMsgId = messages.Messages[len(messages.Messages)-1].MessageId
+	setMessageMap(messages)
+	var lastMsgId = getLastMessageId(messages)
 
 	for i := 1; i < settings.Deep; i++ {
 		messagesOld, err := client.GetMessagesOldMsg(settings.TeamUid, chatUid, lastMsgId)
-		if err != nil {
-			panic(err)
-		}
-		lastMsgId = messages.Messages[len(messagesOld.Messages)-1].MessageId
-		for key := range messagesOld.Messages {
-			all_msg[messagesOld.Messages[key].MessageId] = messagesOld.Messages[key].Content.Text
-		}
+		er(err)
+
+		lastMsgId = getLastMessageId(messagesOld)
+		setMessageMap(messagesOld)
 	}
 
-	for key := range all_msg {
-		var text = all_msg[key]
-		s := strings.Split(text, ":")[0]
+	filterMessages()
 
-		if s == "Удалён участник" {
-			result_pull[key] = text
-		}
+	if len(resultPull) > 0 {
+		websocketConnection, err := client.Ws(settings.TeamUid, nil)
+		er(err)
 
-	}
-
-	if settings.DryRun {
-		if len(result_pull) > 0 {
-			fmt.Println("Список сообщений для удаления")
-			for key := range result_pull {
-				fmt.Println(result_pull[key])
-			}
-		} else {
-			fmt.Println("Нет системных сообщений для удаления")
-		}
-	} else {
-		if len(result_pull) > 0 {
-			websocketConnection, err := client.Ws(settings.TeamUid, nil)
-			if err != nil {
-				panic(err)
-			}
-			for key := range result_pull {
+		for key := range resultPull {
+			if settings.DryRun {
+				fmt.Printf("сообщение %s будет удалено (dryrun) [%s]", key, resultPull[key])
+			}else{
 				websocketConnection.DeleteMessage(key)
 				time.Sleep(3 * time.Second)
-				fmt.Printf("сообщение %s было удалено [%s]", key, result_pull[key])
-				if _, err := websocketConnection.WaitForConfirm(); err != nil {
-					panic(err)
-				}
-			}
-			websocketConnection.Close()
-		} else {
-			fmt.Println("Нет системных сообщений для удаления")
-		}
-	}
 
+				fmt.Printf("сообщение %s удалено [%s]", key, resultPull[key])
+
+				_, err := websocketConnection.WaitForConfirm()
+				er(err)
+			}
+
+		}
+		websocketConnection.Close()
+	}else{
+		fmt.Println("Нет системных сообщений для удаления")
+	}
 }
