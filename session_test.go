@@ -3,6 +3,9 @@ package tdclient
 import (
 	"os"
 	"testing"
+	"time"
+
+	"github.com/tada-team/tdproto/tdapi"
 
 	"github.com/tada-team/kozma"
 
@@ -40,24 +43,24 @@ func TestSession(t *testing.T) {
 	me := tokenResp.Me
 	c.SetToken(tokenResp.Token)
 
-	anyTeam := me.Teams[0]
-	contacts, err := c.Contacts(anyTeam.Uid)
+	team := me.Teams[0]
+	contacts, err := c.Contacts(team.Uid)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var anyCoworker tdproto.Contact
+	var coworker tdproto.Contact
 	for _, contact := range contacts {
 		if contact.CanSendMessage != nil && *contact.CanSendMessage {
-			anyCoworker = contact
+			coworker = contact
 			break
 		}
 	}
-	if anyCoworker.Jid.Empty() {
+	if coworker.Jid.Empty() {
 		t.Error("coworker not fouind in contacts")
 	}
 
-	ws, err := c.Ws(anyTeam.Uid, func(err error) {
+	ws, err := c.Ws(team.Uid, func(err error) {
 		t.Fatal(err)
 	})
 	if err != nil {
@@ -76,7 +79,7 @@ func TestSession(t *testing.T) {
 	})
 
 	t.Run("create message", func(t *testing.T) {
-		messageUid := ws.SendPlainMessage(anyCoworker.Jid, kozma.Say())
+		messageUid := ws.SendPlainMessage(coworker.Jid, kozma.Say())
 		msg, _, err := ws.WaitForMessage()
 		if err != nil {
 			t.Fatal(err)
@@ -95,6 +98,24 @@ func TestSession(t *testing.T) {
 				t.Fatal("invalid message uid")
 			}
 		})
+	})
+
+	t.Run("create task", func(t *testing.T) {
+		text := kozma.Say()
+		chat, err := c.CreateTask(team.Uid, tdapi.Task{
+			Description: text,
+			Tags:        []string{"autotest"},
+			Assignee:    coworker.Jid,
+			Deadline:    tdproto.IsoDatetime(time.Now().Add(time.Hour)),
+			Public:      false,
+			RemindAt:    tdproto.IsoDatetime(time.Now().Add(time.Minute)),
+		})
+		if err != nil {
+			t.Error(err)
+		}
+		if chat.Description != text {
+			t.Error("task description mismatched: want:", text, "got:", chat.Description)
+		}
 	})
 }
 
