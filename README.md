@@ -125,3 +125,11 @@ Echobot: make response to every direct message.
 ```bash
 go run examples/echobot/main.go -team <team uid> -token <token>
 ```
+
+### Delete system alerts
+
+If you not need cleans alerts now, set `-dryrun` options. Query ruturns you list message delete prepareing
+
+```bash
+go run delete-messages/delete_sys_alerts.go -token <token> -team <team uid> -chat <chat jid>
+```
