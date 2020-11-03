@@ -168,6 +168,62 @@ func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text str
 	return resp.Result, nil
 }
 
+func (s Session) GetMessages(teamUid string, chat tdproto.JID) (tdproto.ChatMessages, error) {
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.ChatMessages `json:"result"`
+	})
+
+	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/messages/%s", teamUid, chat), resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
+func (s Session) DeleteMessage(teamUid string, chat tdproto.JID, MsgId string) (tdproto.ChatMessages, error) {
+
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.ChatMessages `json:"result"`
+	})
+
+	if err := s.doDelete(fmt.Sprintf("/api/v4/teams/%s/groups/%s/message/%s", teamUid, chat, MsgId), resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
+func (s Session) GetMessagesOldMsg(teamUid string, chat tdproto.JID, lastMsgId string) (tdproto.ChatMessages, error) {
+
+	param := map[string]string{}
+	param["old_from"] = lastMsgId
+
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.ChatMessages `json:"result"`
+	})
+
+	if err := s.doGetParams(fmt.Sprintf("/api/v4/teams/%s/messages/%s", teamUid, chat), resp, param); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
 func (s Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, error) {
 	resp := new(struct {
 		tdapi.Resp
