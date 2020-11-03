@@ -45,8 +45,6 @@ func main() {
 	var lastMsgId = messages.Messages[len(messages.Messages)-1].MessageId
 
 	for i := 1; i < settings.Deep; i++ {
-		// var lastMsgId = messages.Messages[len(messages.Messages)-1].MessageId
-
 		messagesOld, err := client.GetMessagesOldMsg(settings.TeamUid, chatUid, lastMsgId)
 		if err != nil {
 			panic(err)
@@ -67,7 +65,7 @@ func main() {
 
 	}
 
-	if !settings.DryRun {
+	if settings.DryRun {
 		if len(result_pull) > 0 {
 			fmt.Println("Список сообщений для удаления")
 			for key := range result_pull {
