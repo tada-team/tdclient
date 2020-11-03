@@ -1,16 +1,15 @@
 package tdclient
 
 import (
+	"os"
 	"testing"
 )
 
-const (
-	testServer       = "https://demo.tada.team"
-	testAccountPhone = "+75550000000"
-	testAccountCode  = "5555"
-)
-
 func TestSession(t *testing.T) {
+	testServer := mustEnv("TEST_SERVER")
+	testAccountPhone := mustEnv("TEST_ACCOUNT_PHONE")
+	testAccountCode := mustEnv("TEST_ACCOUNT_CODE")
+
 	c, err := NewSession(testServer)
 	if err != nil {
 		t.Fatal(err)
@@ -40,7 +39,6 @@ func TestSession(t *testing.T) {
 	ws, err := c.Ws(anyTeam.Uid, func(err error) {
 		t.Fatal(err)
 	})
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,4 +47,12 @@ func TestSession(t *testing.T) {
 	if confirmId == "" {
 		t.Error("invalid confirm id")
 	}
+}
+
+func mustEnv(key string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		panic(key + " variable not set")
+	}
+	return v
 }
