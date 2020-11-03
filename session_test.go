@@ -63,7 +63,6 @@ func TestSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer ws.Close()
 
 	t.Run("ping", func(t *testing.T) {
 		confirmId := ws.Ping()
@@ -71,8 +70,8 @@ func TestSession(t *testing.T) {
 		if err := ws.WaitFor(ev); err != nil {
 			t.Fatal(err)
 		}
-		if ev.ConfirmId != confirmId {
-			t.Error("confirmId mismatched")
+		if ev.Params.ConfirmId != confirmId {
+			t.Error("confirmId mismatched: got:", ev.ConfirmId, "want:", confirmId)
 		}
 	})
 
