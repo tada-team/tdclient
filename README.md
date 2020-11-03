@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/tada-team/tdclient.svg?branch=master)](https://travis-ci.org/tada-team/tdclient)
 # tdclient
 Simple client library.
 
