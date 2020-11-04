@@ -48,33 +48,61 @@ func TestSession(t *testing.T) {
 		if len(tokenResp.Me.Teams) == 0 {
 			t.Fatalf("invalid teams number: %d", len(tokenResp.Me.Teams))
 		}
-		team = tokenResp.Me.Teams[0]
+
+		for _, v := range tokenResp.Me.Teams {
+			if v.Me.CanAddToTeam != nil && *v.Me.CanAddToTeam {
+				team = v
+				break
+			}
+		}
 
 		c.SetToken(tokenResp.Token)
 	})
 
+	if team.Uid == "" {
+		t.Fatal("no valid teams (where i am admin) found")
+	}
+
 	var coworker tdproto.Contact
-	t.Run("contacts", func(t *testing.T) {
+	t.Run("contacts list", func(t *testing.T) {
+		anyPhone := "+79870000000"
+		newContact, err := c.AddContact(team.Uid, anyPhone)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		contacts, err := c.Contacts(team.Uid)
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		newContactFound := false
 		for _, contact := range contacts {
+			if contact.Jid == newContact.Jid {
+				newContactFound = true
+			}
 			if contact.CanSendMessage != nil && *contact.CanSendMessage {
 				coworker = contact
-				break
 			}
-		}
-		if coworker.Jid.Empty() {
-			t.Fatal("coworker not fouind in contacts")
 		}
 
-		t.Run("me smoke test", func(t *testing.T) {
-			_, err := c.Me(team.Uid)
-			if err != nil {
-				t.Fatal(err)
-			}
-		})
+		if !newContactFound {
+			t.Error("new contact not found:", newContact.Jid)
+		}
+	})
+
+	if coworker.Jid.Empty() {
+		t.Fatal("coworker not fouind in contacts")
+	}
+
+	t.Run("me smoke test", func(t *testing.T) {
+		me, err := c.Me(team.Uid)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if me.CanAddToTeam == nil || !*me.CanAddToTeam {
+			t.Fatal("cant add to team")
+		}
 	})
 
 	t.Run("ws", func(t *testing.T) {
