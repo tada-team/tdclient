@@ -196,6 +196,18 @@ func TestSession(t *testing.T) {
 				t.Error("invalid groups number:", len(members))
 			}
 		})
+
+		t.Run("remove member", func(t *testing.T) {
+			if err := c.DropGroupMember(team.Uid, group.Jid, newContact.Jid); err != nil {
+				t.Fatal(err)
+			}
+		})
+
+		t.Run("remove group", func(t *testing.T) {
+			if err := c.DropGroup(team.Uid, group.Jid); err != nil {
+				t.Fatal(err)
+			}
+		})
 	})
 }
 

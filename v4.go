@@ -248,14 +248,32 @@ func (s Session) GroupMembers(teamUid string, group tdproto.JID) ([]tdproto.Grou
 	return resp.Result.Members, nil
 }
 
-func (s Session) DropGroupMember(teamUid string, groupUid string, contactUid string) error {
+func (s Session) DropGroupMember(teamUid string, group, contact tdproto.JID) error {
 	resp := new(tdapi.Resp)
 
 	if !tdproto.ValidUid(teamUid) {
 		return InvalidTeamUid
 	}
 
-	if err := s.doDelete("/api/v4/teams/"+teamUid+"/groups/"+groupUid+"/members/"+contactUid, resp); err != nil {
+	if err := s.doDelete(fmt.Sprintf("/api/v4/teams/%s/groups/%s/members/%s", teamUid, group, contact), resp); err != nil {
+		return err
+	}
+
+	if !resp.Ok {
+		return resp.Error
+	}
+
+	return nil
+}
+
+func (s Session) DropGroup(teamUid string, group tdproto.JID) error {
+	resp := new(tdapi.Resp)
+
+	if !tdproto.ValidUid(teamUid) {
+		return InvalidTeamUid
+	}
+
+	if err := s.doDelete(fmt.Sprintf("/api/v4/teams/%s/groups/%s", teamUid, group), resp); err != nil {
 		return err
 	}
 
