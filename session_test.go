@@ -63,10 +63,10 @@ func TestSession(t *testing.T) {
 		t.Fatal("no valid teams (where i am admin) found")
 	}
 
-	var coworker tdproto.Contact
+	var newContact tdproto.Contact
 	t.Run("contacts list", func(t *testing.T) {
 		anyPhone := "+79870000000"
-		newContact, err := c.AddContact(team.Uid, anyPhone)
+		newContact, err = c.AddContact(team.Uid, anyPhone)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -81,19 +81,18 @@ func TestSession(t *testing.T) {
 			if contact.Jid == newContact.Jid {
 				newContactFound = true
 			}
-			if contact.CanSendMessage != nil && *contact.CanSendMessage {
-				coworker = contact
-			}
 		}
-
 		if !newContactFound {
 			t.Error("new contact not found:", newContact.Jid)
 		}
 	})
 
-	if coworker.Jid.Empty() {
-		t.Fatal("coworker not fouind in contacts")
-	}
+	t.Run("http message smoke test", func(t *testing.T) {
+		_, err := c.SendPlaintextMessage(team.Uid, newContact.Jid, kozma.Say())
+		if err != nil {
+			t.Error(err)
+		}
+	})
 
 	t.Run("me smoke test", func(t *testing.T) {
 		me, err := c.Me(team.Uid)
@@ -125,7 +124,7 @@ func TestSession(t *testing.T) {
 		})
 
 		t.Run("create message", func(t *testing.T) {
-			messageUid := ws.SendPlainMessage(coworker.Jid, kozma.Say())
+			messageUid := ws.SendPlainMessage(newContact.Jid, kozma.Say())
 			msg, _, err := ws.WaitForMessage()
 			if err != nil {
 				t.Fatal(err)
@@ -152,7 +151,7 @@ func TestSession(t *testing.T) {
 		chat, err := c.CreateTask(team.Uid, tdapi.Task{
 			Description: text,
 			Tags:        []string{"autotest"},
-			Assignee:    coworker.Jid,
+			Assignee:    newContact.Jid,
 			Deadline:    tdproto.IsoDatetime(time.Now().Add(time.Hour)),
 			Public:      false,
 			RemindAt:    tdproto.IsoDatetime(time.Now().Add(time.Minute)),
