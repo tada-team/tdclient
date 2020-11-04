@@ -131,5 +131,5 @@ go run examples/echobot/main.go -team <team uid> -token <token>
 If you not need cleans alerts now, set `-dryrun` options. Query ruturns you list message delete prepareing
 
 ```bash
-go run delete-messages/delete_sys_alerts.go -token <token> -team <team uid> -chat <chat jid>
+go run examples/delete-messages/main.go -token <token> -team <team uid> -chat <chat jid>
 ```

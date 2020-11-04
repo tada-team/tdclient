@@ -15,12 +15,10 @@ type Settings struct {
 	Chat          string
 	Token         string
 	DryRun        bool
-	Deep          int
 	requireTeam   bool
 	requireChat   bool
 	requireToken  bool
 	requireDryRun bool
-	requireDeep   int
 }
 
 func NewSettings() Settings { return Settings{} }
@@ -42,11 +40,6 @@ func (s *Settings) RequireToken() {
 
 func (s *Settings) RequireDryRun() {
 	flag.BoolVar(&s.DryRun, "dryrun", false, "read or del pull")
-	s.requireDryRun = true
-}
-
-func (s *Settings) RequireDeep() {
-	flag.IntVar(&s.Deep, "deep", 5, "only")
 	s.requireDryRun = true
 }
 

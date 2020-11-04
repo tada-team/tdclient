@@ -185,14 +185,13 @@ func (s Session) GetMessages(teamUid string, chat tdproto.JID) (tdproto.ChatMess
 	return resp.Result, nil
 }
 
-func (s Session) DeleteMessage(teamUid string, chat tdproto.JID, MsgId string) (tdproto.ChatMessages, error) {
-
+func (s Session) DeleteMessage(teamUid string, chat tdproto.JID, msgId string) (tdproto.ChatMessages, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.ChatMessages `json:"result"`
 	})
 
-	if err := s.doDelete(fmt.Sprintf("/api/v4/teams/%s/groups/%s/message/%s", teamUid, chat, MsgId), resp); err != nil {
+	if err := s.doDelete(fmt.Sprintf("/api/v4/teams/%s/chats/%s/messages/%s", teamUid, chat, msgId), resp); err != nil {
 		return resp.Result, err
 	}
 

@@ -1,9 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/tada-team/tdclient"
 	"github.com/tada-team/tdclient/examples"
@@ -34,23 +34,20 @@ func filterMessages() {
 	}
 }
 
-func er(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func main() {
+	deph := flag.Int("deph", 5, "sd")
+
 	settings := examples.NewSettings()
 	settings.RequireToken()
 	settings.RequireTeam()
 	settings.RequireChat()
 	settings.RequireDryRun()
-	settings.RequireDeep()
 	settings.Parse()
 
 	client, err := tdclient.NewSession(settings.Server)
-	er(err)
+	if err != nil {
+		panic(err)
+	}
 
 	client.SetToken(settings.Token)
 	client.SetVerbose(settings.Verbose)
@@ -58,15 +55,19 @@ func main() {
 	chatUid := *tdproto.NewJID(settings.Chat)
 
 	messages, err := client.GetMessages(settings.TeamUid, chatUid)
-	er(err)
+	if err != nil {
+		panic(err)
+	}
 
 	messageMapUpdate(messages)
 	var lastMsgId = getLastMessageId(messages)
 
-	for i := 1; i < settings.Deep; i++ {
+	for i := 0; i < *deph; i++ {
 		fmt.Println("Загружаем страницу", i, lastMsgId)
 		messagesOld, err := client.GetOldMessagesFrom(settings.TeamUid, chatUid, lastMsgId)
-		er(err)
+		if err != nil {
+			panic(err)
+		}
 		fmt.Println("На странице", len(messagesOld.Messages))
 
 		lastMsgId = getLastMessageId(messagesOld)
@@ -78,24 +79,17 @@ func main() {
 	fmt.Println("Кандидатов на удаление", len(blackValue))
 
 	if len(blackValue) > 0 {
-		websocketConnection, err := client.Ws(settings.TeamUid, nil)
-		er(err)
-
 		for key := range blackValue {
 			if settings.DryRun {
-				fmt.Println("сообщение будет удалено (dryrun) ", key, blackValue[key])
+				fmt.Println("сообщение будет удалено (dryrun)", key, blackValue[key])
 			} else {
-				websocketConnection.DeleteMessage(key)
-				time.Sleep(100 * time.Millisecond)
-				fmt.Println("сообщение удалено ", key, blackValue[key])
-
-				_, err := websocketConnection.WaitForConfirm()
-				er(err)
+				_, err := client.DeleteMessage(settings.TeamUid, chatUid, key)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println("сообщение удалено", key, blackValue[key])
 			}
-
 		}
-		err = websocketConnection.Close()
-		er(err)
 	} else {
 		fmt.Println("Нет системных сообщений для удаления")
 	}
