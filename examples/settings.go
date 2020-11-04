@@ -8,7 +8,7 @@ import (
 	"github.com/tada-team/tdproto"
 )
 
-type Settings struct {
+type settings struct {
 	Server        string
 	Verbose       bool
 	TeamUid       string
@@ -21,29 +21,29 @@ type Settings struct {
 	requireDryRun bool
 }
 
-func NewSettings() Settings { return Settings{} }
+func NewSettings() settings { return settings{} }
 
-func (s *Settings) RequireTeam() {
+func (s *settings) RequireTeam() {
 	flag.StringVar(&s.TeamUid, "team", "", "team uid")
 	s.requireTeam = true
 }
 
-func (s *Settings) RequireChat() {
+func (s *settings) RequireChat() {
 	flag.StringVar(&s.Chat, "chat", "", "chat jid")
 	s.requireChat = true
 }
 
-func (s *Settings) RequireToken() {
+func (s *settings) RequireToken() {
 	flag.StringVar(&s.Token, "token", "", "bot or user token")
 	s.requireToken = true
 }
 
-func (s *Settings) RequireDryRun() {
+func (s *settings) RequireDryRun() {
 	flag.BoolVar(&s.DryRun, "dryrun", false, "read or del pull")
 	s.requireDryRun = true
 }
 
-func (s *Settings) Parse() {
+func (s *settings) Parse() {
 	flag.StringVar(&s.Server, "server", "https://web.tada.team", "server address")
 	flag.BoolVar(&s.Verbose, "verbose", false, "verbose logging")
 	flag.Parse()
