@@ -94,7 +94,7 @@ func TestSession(t *testing.T) {
 	t.Run("http message smoke test", func(t *testing.T) {
 		_, err := c.SendPlaintextMessage(team.Uid, newContact.Jid, kozma.Say())
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 	})
 
@@ -152,7 +152,7 @@ func TestSession(t *testing.T) {
 
 	t.Run("create task", func(t *testing.T) {
 		text := kozma.Say()
-		chat, err := c.CreateTask(team.Uid, tdapi.Task{
+		task, err := c.CreateTask(team.Uid, tdapi.Task{
 			Description: text,
 			Tags:        []string{"autotest"},
 			Assignee:    newContact.Jid,
@@ -161,11 +161,41 @@ func TestSession(t *testing.T) {
 			RemindAt:    tdproto.IsoDatetime(time.Now().Add(time.Minute)),
 		})
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
-		if chat.Description != text {
-			t.Error("task description mismatched: want:", text, "got:", chat.Description)
+		if task.Description != text {
+			t.Error("task description mismatched: want:", text, "got:", task.Description)
 		}
+	})
+
+	t.Run("groups", func(t *testing.T) {
+		group, err := c.CreateGroup(team.Uid, tdapi.Group{
+			DisplayName: "test group",
+			Public:      false,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		t.Run("add member", func(t *testing.T) {
+			member, err := c.AddGroupMember(team.Uid, group.Jid, newContact.Jid)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if member.Status != tdproto.GroupMember {
+				t.Error("invalid status:", member.Status)
+			}
+		})
+
+		t.Run("get members", func(t *testing.T) {
+			members, err := c.GroupMembers(team.Uid, group.Jid)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(members) != 2 {
+				t.Error("invalid groups number:", len(members))
+			}
+		})
 	})
 }
 

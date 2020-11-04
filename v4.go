@@ -185,15 +185,32 @@ func (s Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, error
 	return resp.Result, nil
 }
 
-func (s Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdproto.Chat, error) {
-	req := map[string]interface{}{
-		"jid":    contact.String(),
-		"status": tdproto.GroupMember,
+func (s Session) CreateGroup(teamUid string, req tdapi.Group) (tdproto.Chat, error) {
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.Chat `json:"result"`
+	})
+
+	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/groups", teamUid), req, resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
+func (s Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdproto.GroupMembership, error) {
+	req := tdapi.GroupMember{
+		Jid:    contact,
+		Status: tdproto.GroupMember,
 	}
 
 	resp := new(struct {
 		tdapi.Resp
-		Result tdproto.Chat `json:"result"`
+		Result tdproto.GroupMembership `json:"result"`
 	})
 
 	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/groups/%s/members", teamUid, group), req, resp); err != nil {
@@ -203,10 +220,11 @@ func (s Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdp
 	if !resp.Ok {
 		return resp.Result, resp.Error
 	}
+
 	return resp.Result, nil
 }
 
-func (s Session) GroupMembers(teamUid string, groupUid string) ([]tdproto.GroupMembership, error) {
+func (s Session) GroupMembers(teamUid string, group tdproto.JID) ([]tdproto.GroupMembership, error) {
 	type MembersParams struct {
 		Members []tdproto.GroupMembership `json:"members"`
 	}
@@ -219,7 +237,7 @@ func (s Session) GroupMembers(teamUid string, groupUid string) ([]tdproto.GroupM
 		return resp.Result.Members, errors.New("invalid team uid")
 	}
 
-	if err := s.doGet("/api/v4/teams/"+teamUid+"/groups/"+groupUid+"/members", resp); err != nil {
+	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/groups/%s/members", teamUid, group), resp); err != nil {
 		return resp.Result.Members, err
 	}
 
