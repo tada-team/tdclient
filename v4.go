@@ -14,7 +14,7 @@ func (s Session) Ping() error {
 		tdapi.Resp
 		Result string `json:"result"`
 	})
-	return s.doGet("/api/v4/ping", resp)
+	return s.doGet("/api/v4/ping", nil, resp)
 }
 
 func (s Session) Me(teamUid string) (tdproto.Contact, error) {
@@ -27,7 +27,7 @@ func (s Session) Me(teamUid string) (tdproto.Contact, error) {
 		return tdproto.Contact{}, errors.New("invalid team uid")
 	}
 
-	if err := s.doGet("/api/v4/teams/"+teamUid, resp); err != nil {
+	if err := s.doGet("/api/v4/teams/"+teamUid, nil, resp); err != nil {
 		return tdproto.Contact{}, err
 	}
 
@@ -48,7 +48,7 @@ func (s Session) Contacts(teamUid string) ([]tdproto.Contact, error) {
 		return resp.Result, errors.New("invalid team uid")
 	}
 
-	if err := s.doGet("/api/v4/teams/"+teamUid+"/contacts/", resp); err != nil {
+	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/contacts/", teamUid), nil, resp); err != nil {
 		return resp.Result, err
 	}
 
@@ -208,7 +208,7 @@ func (s Session) GetGroups(teamUid string) ([]tdproto.Chat, error) {
 		Result []tdproto.Chat `json:"result"`
 	})
 
-	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/groups", teamUid), resp); err != nil {
+	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/groups", teamUid), nil, resp); err != nil {
 		return resp.Result, err
 	}
 
@@ -254,7 +254,7 @@ func (s Session) GroupMembers(teamUid string, group tdproto.JID) ([]tdproto.Grou
 		return resp.Result.Members, errors.New("invalid team uid")
 	}
 
-	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/groups/%s/members", teamUid, group), resp); err != nil {
+	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/groups/%s/members", teamUid, group), nil, resp); err != nil {
 		return resp.Result.Members, err
 	}
 
@@ -299,4 +299,39 @@ func (s Session) DropGroup(teamUid string, group tdproto.JID) error {
 	}
 
 	return nil
+}
+
+func (s Session) GetChats(teamUid string, f *tdapi.ChatFilter) ([]tdproto.Chat, error) {
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.PaginatedChats `json:"result"`
+	})
+
+	if f == nil {
+		f = new(tdapi.ChatFilter)
+	}
+
+	if f.Limit == 0 {
+		f.Limit = 100
+	}
+
+	result := make([]tdproto.Chat, 0)
+	for {
+		if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/chats", teamUid), f, resp); err != nil {
+			return result, err
+		}
+
+		if !resp.Ok {
+			return result, resp.Error
+		}
+
+		if len(resp.Result.Objects) == 0 {
+			break
+		}
+
+		f.Offset += f.Limit
+		result = append(result, resp.Result.Objects...)
+	}
+
+	return result, nil
 }

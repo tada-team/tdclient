@@ -168,6 +168,28 @@ func TestSession(t *testing.T) {
 		}
 	})
 
+	t.Run("chats", func(t *testing.T) {
+		chats, err := c.GetChats(team.Uid, &tdapi.ChatFilter{
+			ChatType: "direct",
+			Paginator: tdapi.Paginator{
+				Limit: 1,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(chats) <= 2 {
+			t.Error("chats number must be > 2")
+		}
+
+		for _, chat := range chats {
+			if chat.ChatType != tdproto.DirectChatType {
+				t.Error("invalid chat type:", chat.ChatType)
+			}
+		}
+	})
+
 	t.Run("groups", func(t *testing.T) {
 		group, err := c.CreateGroup(team.Uid, tdapi.Group{
 			DisplayName: "test group",

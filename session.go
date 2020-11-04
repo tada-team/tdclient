@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gorilla/schema"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 )
@@ -47,7 +48,7 @@ func NewSession(server string) (Session, error) {
 
 func (s *Session) Features() (*tdproto.Features, error) {
 	if s.features == nil {
-		if err := s.doGet("/features.json", &s.features); err != nil {
+		if err := s.doGet("/features.json", nil, &s.features); err != nil {
 			return s.features, err
 		}
 	}
@@ -79,27 +80,38 @@ func (s Session) httpClient() *http.Client {
 	}
 }
 
-func (s Session) url(path string) string {
-	s.server.Path = path
-	return s.server.String()
-}
-
-func (s Session) doGet(path string, resp interface{}) error {
-	return s.doRaw("GET", path, nil, resp)
+func (s Session) doGet(path string, params interface{}, resp interface{}) error {
+	return s.doRaw("GET", path, params, nil, resp)
 }
 
 func (s Session) doPost(path string, data, v interface{}) error {
-	return s.doRaw("POST", path, data, v)
+	return s.doRaw("POST", path, nil, data, v)
 }
 
 func (s Session) doDelete(path string, resp interface{}) error {
-	return s.doRaw("DELETE", path, nil, resp)
+	return s.doRaw("DELETE", path, nil, nil, resp)
 }
 
-func (s Session) doRaw(method, path string, data, v interface{}) error {
+func (s Session) doRaw(method, path string, params, data, v interface{}) error {
 	client := s.httpClient()
 
-	path = s.url(path)
+	var u = s.server
+	u.Path = path
+	if params != nil {
+		var encoder = schema.NewEncoder()
+		q := make(url.Values)
+		if err := encoder.Encode(params, q); err != nil {
+			return err
+		}
+		for k := range q {
+			v := q.Get(k)
+			if v == "" {
+				delete(q, k)
+			}
+		}
+		u.RawQuery = q.Encode()
+	}
+	path = u.String()
 
 	var buf *bytes.Buffer
 	if data == nil {
