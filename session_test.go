@@ -5,11 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tada-team/tdproto/tdapi"
-
 	"github.com/tada-team/kozma"
-
 	"github.com/tada-team/tdproto"
+	"github.com/tada-team/tdproto/tdapi"
 )
 
 func TestSession(t *testing.T) {
@@ -24,6 +22,12 @@ func TestSession(t *testing.T) {
 
 	t.Run("http ping", func(t *testing.T) {
 		if err := c.Ping(); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("features smoke test", func(t *testing.T) {
+		if _, err := c.Features(); err != nil {
 			t.Fatal(err)
 		}
 	})
