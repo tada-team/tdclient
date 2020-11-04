@@ -35,7 +35,7 @@ func filterMessages() {
 }
 
 func main() {
-	deph := flag.Int("deph", 5, "sd")
+	deph := flag.Int("deph", 5, "depth degree")
 
 	settings := examples.NewSettings()
 	settings.RequireToken()
