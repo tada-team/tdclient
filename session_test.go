@@ -22,74 +22,75 @@ func TestSession(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codeResp, err := c.AuthBySmsSendCode(testAccountPhone)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if codeResp.CodeLength != len(testAccountCode) {
-		t.Fatalf("invalid code length: %+v", codeResp)
-	}
-
-	tokenResp, err := c.AuthBySmsGetToken(testAccountPhone, testAccountCode)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(tokenResp.Me.Teams) == 0 {
-		t.Fatalf("invalid teams number: %d", len(tokenResp.Me.Teams))
-	}
-
-	me := tokenResp.Me
-	c.SetToken(tokenResp.Token)
-
-	team := me.Teams[0]
-	contacts, err := c.Contacts(team.Uid)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var coworker tdproto.Contact
-	for _, contact := range contacts {
-		if contact.CanSendMessage != nil && *contact.CanSendMessage {
-			coworker = contact
-			break
-		}
-	}
-	if coworker.Jid.Empty() {
-		t.Error("coworker not fouind in contacts")
-	}
-
-	ws, err := c.Ws(team.Uid, func(err error) {
-		t.Fatal(err)
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Run("ping", func(t *testing.T) {
-		confirmId := ws.Ping()
-		ev := new(tdproto.ServerConfirm)
-		if err := ws.WaitFor(ev); err != nil {
+	t.Run("http ping", func(t *testing.T) {
+		if err := c.Ping(); err != nil {
 			t.Fatal(err)
 		}
-		if ev.Params.ConfirmId != confirmId {
-			t.Error("confirmId mismatched: got:", ev.ConfirmId, "want:", confirmId)
-		}
 	})
 
-	t.Run("create message", func(t *testing.T) {
-		messageUid := ws.SendPlainMessage(coworker.Jid, kozma.Say())
-		msg, _, err := ws.WaitForMessage()
+	var team tdproto.Team
+
+	t.Run("sms login", func(t *testing.T) {
+		codeResp, err := c.AuthBySmsSendCode(testAccountPhone)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if msg.MessageId != messageUid {
-			t.Fatal("invalid message uid")
+
+		if codeResp.CodeLength != len(testAccountCode) {
+			t.Fatalf("invalid code length: %+v", codeResp)
 		}
 
-		t.Run("delete message", func(t *testing.T) {
-			ws.DeleteMessage(messageUid)
+		tokenResp, err := c.AuthBySmsGetToken(testAccountPhone, testAccountCode)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(tokenResp.Me.Teams) == 0 {
+			t.Fatalf("invalid teams number: %d", len(tokenResp.Me.Teams))
+		}
+		team = tokenResp.Me.Teams[0]
+
+		c.SetToken(tokenResp.Token)
+	})
+
+	var coworker tdproto.Contact
+	t.Run("contacts", func(t *testing.T) {
+		contacts, err := c.Contacts(team.Uid)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, contact := range contacts {
+			if contact.CanSendMessage != nil && *contact.CanSendMessage {
+				coworker = contact
+				break
+			}
+		}
+		if coworker.Jid.Empty() {
+			t.Fatal("coworker not fouind in contacts")
+		}
+	})
+
+	t.Run("ws", func(t *testing.T) {
+		ws, err := c.Ws(team.Uid, func(err error) {
+			t.Fatal(err)
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		t.Run("ping", func(t *testing.T) {
+			confirmId := ws.Ping()
+			ev := new(tdproto.ServerConfirm)
+			if err := ws.WaitFor(ev); err != nil {
+				t.Fatal(err)
+			}
+			if ev.Params.ConfirmId != confirmId {
+				t.Error("confirmId mismatched: got:", ev.ConfirmId, "want:", confirmId)
+			}
+		})
+
+		t.Run("create message", func(t *testing.T) {
+			messageUid := ws.SendPlainMessage(coworker.Jid, kozma.Say())
 			msg, _, err := ws.WaitForMessage()
 			if err != nil {
 				t.Fatal(err)
@@ -97,6 +98,17 @@ func TestSession(t *testing.T) {
 			if msg.MessageId != messageUid {
 				t.Fatal("invalid message uid")
 			}
+
+			t.Run("delete message", func(t *testing.T) {
+				ws.DeleteMessage(messageUid)
+				msg, _, err := ws.WaitForMessage()
+				if err != nil {
+					t.Fatal(err)
+				}
+				if msg.MessageId != messageUid {
+					t.Fatal("invalid message uid")
+				}
+			})
 		})
 	})
 
