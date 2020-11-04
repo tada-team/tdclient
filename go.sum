@@ -75,8 +75,8 @@ github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/tada-team/kozma v1.1.0 h1:BGwxSK43Dpr6wKoXVTVbdfoTFTptOEhxmni6aCOreJU=
 github.com/tada-team/kozma v1.1.0/go.mod h1:TIsa1b64SsrVPFEqdoJDnMhO3HYFVpN0B0t2GKh93uY=
-github.com/tada-team/tdproto v1.12.2 h1:mUepwKmpZuFDdw2JB9Hq7tfHpcxuwPWC98YrBWq6ndQ=
-github.com/tada-team/tdproto v1.12.2/go.mod h1:89BIR0oy+LXj/kNlzAhAJghscks+/HjMYX5YpulMdAM=
+github.com/tada-team/tdproto v1.12.3 h1:4akKqQvw5yL9OtmrIfK/zOWZiFoUyOqNy5RTsrh9xCo=
+github.com/tada-team/tdproto v1.12.3/go.mod h1:89BIR0oy+LXj/kNlzAhAJghscks+/HjMYX5YpulMdAM=
 github.com/vmihailenco/msgpack/v4 v4.3.11/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+NXzzngzBKDPIqw4=
 github.com/vmihailenco/msgpack/v5 v5.0.0-beta.1 h1:d71/KA0LhvkrJ/Ok+Wx9qK7bU8meKA1Hk0jpVI5kJjk=
 github.com/vmihailenco/msgpack/v5 v5.0.0-beta.1/go.mod h1:xlngVLeyQ/Qi05oQxhQ+oTuqa03RjMwMfk/7/TCs+QI=
