@@ -54,7 +54,7 @@ func TestSession(t *testing.T) {
 		}
 
 		for _, v := range tokenResp.Me.Teams {
-			if v.Me.CanAddToTeam != nil && *v.Me.CanAddToTeam {
+			if v.Me.CanAddToTeam {
 				team = v
 				break
 			}
@@ -103,7 +103,7 @@ func TestSession(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if me.CanAddToTeam == nil || !*me.CanAddToTeam {
+		if !me.CanAddToTeam {
 			t.Fatal("cant add to team")
 		}
 	})

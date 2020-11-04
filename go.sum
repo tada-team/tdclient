@@ -79,6 +79,8 @@ github.com/tada-team/tdproto v1.3.3 h1:733DfgEOQD6vysWgBMvLe2zXruUwgsQEVhQkif/9z
 github.com/tada-team/tdproto v1.3.3/go.mod h1:cuT572dAExhZW7lUkVz23ijVyszgNN7KyKpE7OyWT88=
 github.com/tada-team/tdproto v1.10.0 h1:B/JpI+BO/ZH+BS5BDdZnmAZB1/7Zq/4TSu3QeUspHX0=
 github.com/tada-team/tdproto v1.10.0/go.mod h1:89BIR0oy+LXj/kNlzAhAJghscks+/HjMYX5YpulMdAM=
+github.com/tada-team/tdproto v1.11.0 h1:CCAAae5oSLKHfzo/Yh9WTVA8viwHLTy2W5VvVOkdFJ0=
+github.com/tada-team/tdproto v1.11.0/go.mod h1:89BIR0oy+LXj/kNlzAhAJghscks+/HjMYX5YpulMdAM=
 github.com/vmihailenco/msgpack/v4 v4.3.11/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+NXzzngzBKDPIqw4=
 github.com/vmihailenco/msgpack/v5 v5.0.0-beta.1 h1:d71/KA0LhvkrJ/Ok+Wx9qK7bU8meKA1Hk0jpVI5kJjk=
 github.com/vmihailenco/msgpack/v5 v5.0.0-beta.1/go.mod h1:xlngVLeyQ/Qi05oQxhQ+oTuqa03RjMwMfk/7/TCs+QI=
