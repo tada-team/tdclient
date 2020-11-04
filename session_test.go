@@ -68,6 +68,13 @@ func TestSession(t *testing.T) {
 		if coworker.Jid.Empty() {
 			t.Fatal("coworker not fouind in contacts")
 		}
+
+		t.Run("me smoke test", func(t *testing.T) {
+			_, err := c.Me(team.Uid)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
 	})
 
 	t.Run("ws", func(t *testing.T) {
