@@ -202,6 +202,23 @@ func (s Session) CreateGroup(teamUid string, req tdapi.Group) (tdproto.Chat, err
 	return resp.Result, nil
 }
 
+func (s Session) GetGroups(teamUid string) ([]tdproto.Chat, error) {
+	resp := new(struct {
+		tdapi.Resp
+		Result []tdproto.Chat `json:"result"`
+	})
+
+	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/groups", teamUid), resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
 func (s Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdproto.GroupMembership, error) {
 	req := tdapi.GroupMember{
 		Jid:    contact,

@@ -208,6 +208,13 @@ func TestSession(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
+
+		t.Run("group list smoke test", func(t *testing.T) {
+			_, err := c.GetGroups(team.Uid)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
 	})
 }
 
