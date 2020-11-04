@@ -30,6 +30,7 @@ func NewSession(server string) (Session, error) {
 	}
 
 	s.logger = log.New(os.Stdout, "tdclient: ", log.LstdFlags|log.Lmicroseconds|log.Lmsgprefix)
+	s.SetVerbose(false)
 
 	u, err := url.Parse(server)
 	if err != nil {
