@@ -98,9 +98,8 @@ func (s Session) doRaw(method, path string, params, data, v interface{}) error {
 	var u = s.server
 	u.Path = path
 	if params != nil {
-		var encoder = schema.NewEncoder()
 		q := make(url.Values)
-		if err := encoder.Encode(params, q); err != nil {
+		if err := schema.NewEncoder().Encode(params, q); err != nil {
 			return err
 		}
 		for k := range q {
