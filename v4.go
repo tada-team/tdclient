@@ -168,13 +168,13 @@ func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text str
 	return resp.Result, nil
 }
 
-func (s Session) GetMessages(teamUid string, chat tdproto.JID) (tdproto.ChatMessages, error) {
+func (s Session) GetMessages(teamUid string, chat tdproto.JID, f *tdapi.MessageFilter) (tdproto.ChatMessages, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.ChatMessages `json:"result"`
 	})
 
-	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/messages/%s", teamUid, chat), resp); err != nil {
+	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/messages/%s", teamUid, chat),f, resp); err != nil {
 		return resp.Result, err
 	}
 
@@ -192,27 +192,6 @@ func (s Session) DeleteMessage(teamUid string, chat tdproto.JID, msgId string) (
 	})
 
 	if err := s.doDelete(fmt.Sprintf("/api/v4/teams/%s/chats/%s/messages/%s", teamUid, chat, msgId), resp); err != nil {
-		return resp.Result, err
-	}
-
-	if !resp.Ok {
-		return resp.Result, resp.Error
-	}
-
-	return resp.Result, nil
-}
-
-func (s Session) GetOldMessagesFrom(teamUid string, chat tdproto.JID, lastMsgId string) (tdproto.ChatMessages, error) {
-
-	param := map[string]string{}
-	param["old_from"] = lastMsgId
-
-	resp := new(struct {
-		tdapi.Resp
-		Result tdproto.ChatMessages `json:"result"`
-	})
-
-	if err := s.doGetParams(fmt.Sprintf("/api/v4/teams/%s/messages/%s", teamUid, chat), param, resp); err != nil {
 		return resp.Result, err
 	}
 

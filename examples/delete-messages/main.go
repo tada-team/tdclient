@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/tada-team/tdproto/tdapi"
 	"strings"
 
 	"github.com/tada-team/tdclient"
@@ -35,7 +36,7 @@ func filterMessages() {
 }
 
 func main() {
-	deph := flag.Int("deph", 5, "depth degree")
+	depth := flag.Int("depth", 5, "depth degree")
 
 	settings := examples.NewSettings()
 	settings.RequireToken()
@@ -54,7 +55,14 @@ func main() {
 
 	chatUid := *tdproto.NewJID(settings.Chat)
 
-	messages, err := client.GetMessages(settings.TeamUid, chatUid)
+	messages, err := client.GetMessages(settings.TeamUid, chatUid, &tdapi.MessageFilter{
+		UserParams: tdapi.UserParams{
+			Lang: "ru",
+		},
+		Paginator: tdapi.Paginator{
+			Limit: 200,
+		},
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -62,9 +70,17 @@ func main() {
 	messageMapUpdate(messages)
 	var lastMsgId = getLastMessageId(messages)
 
-	for i := 0; i < *deph; i++ {
+	for i := 0; i < *depth; i++ {
 		fmt.Println("Загружаем страницу", i, lastMsgId)
-		messagesOld, err := client.GetOldMessagesFrom(settings.TeamUid, chatUid, lastMsgId)
+		messagesOld, err := client.GetMessages(settings.TeamUid, chatUid, &tdapi.MessageFilter{
+			UserParams: tdapi.UserParams{
+				Lang: "ru",
+			},
+			Paginator: tdapi.Paginator{
+				Limit: 200,
+			},
+			OldFrom: lastMsgId,
+		})
 		if err != nil {
 			panic(err)
 		}
