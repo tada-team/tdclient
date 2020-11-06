@@ -168,21 +168,21 @@ func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text str
 	return resp.Result, nil
 }
 
-func (s Session) GetMessages(teamUid string, chat tdproto.JID, f *tdapi.MessageFilter) (tdproto.ChatMessages, error) {
+func (s Session) GetMessages(teamUid string, chat tdproto.JID, f *tdapi.MessageFilter) ([]tdproto.Message, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.ChatMessages `json:"result"`
 	})
 
-	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/messages/%s", teamUid, chat),f, resp); err != nil {
-		return resp.Result, err
+	if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/messages/%s", teamUid, chat), f, resp); err != nil {
+		return nil, err
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return nil, resp.Error
 	}
 
-	return resp.Result, nil
+	return resp.Result.Messages, nil
 }
 
 func (s Session) DeleteMessage(teamUid string, chat tdproto.JID, msgId string) (tdproto.ChatMessages, error) {

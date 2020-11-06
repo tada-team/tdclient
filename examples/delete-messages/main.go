@@ -53,12 +53,12 @@ func main() {
 			panic(err)
 		}
 
-		if len(messages.Messages) == 0 {
+		if len(messages) == 0 {
 			break
 		}
 
-		filter.OldFrom = messages.Messages[len(messages.Messages)-1].MessageId
-		for _, m := range messages.Messages {
+		filter.OldFrom = messages[len(messages)-1].MessageId
+		for _, m := range messages {
 			if !strings.HasPrefix(m.PushText, "Удалён участник:") {
 				continue
 			}
@@ -77,7 +77,7 @@ func main() {
 			fmt.Println("message deleted:", numProcessed, m.PushText)
 		}
 
-		if len(messages.Messages) < filter.Limit {
+		if len(messages) < filter.Limit {
 			break
 		}
 	}

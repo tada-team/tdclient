@@ -97,7 +97,7 @@ func TestSession(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if message.Chat != newContact.Jid  {
+		if message.Chat != newContact.Jid {
 			t.Error("invalid send message:", newContact.Jid)
 		}
 
@@ -113,13 +113,13 @@ func TestSession(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(messages.Messages) < 1 {
-				t.Error("invalid get messages:", len(messages.Messages))
+			if len(messages) < 1 {
+				t.Error("invalid get messages:", len(messages))
 			}
 		})
 
 		t.Run("delete messages", func(t *testing.T) {
-			_, err := c.DeleteMessage (team.Uid, newContact.Jid, message.MessageId)
+			_, err := c.DeleteMessage(team.Uid, newContact.Jid, message.MessageId)
 			if err != nil {
 				t.Fatal(err)
 			}
