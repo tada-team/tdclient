@@ -32,7 +32,6 @@ func main() {
 	chatUid := *tdproto.NewJID(settings.Chat)
 
 	var lastMsgId = ""
-
 	for {
 		filter := new(tdapi.MessageFilter)
 		filter.Lang = "ru"
@@ -46,19 +45,21 @@ func main() {
 		}
 		if len(messages.Messages) != 0 {
 			lastMsgId = getLastMessageId(messages)
-
 			for key := range messages.Messages {
-				if strings.HasPrefix(messages.Messages[key].PushText, "Удалён участник:") {
-					if settings.DryRun {
-						fmt.Println("message will be deleted (dryrun)", key, messages.Messages[key].PushText)
-					} else {
-						_, err := client.DeleteMessage(settings.TeamUid, chatUid, messages.Messages[key].MessageId)
-						if err != nil {
-							panic(err)
-						}
-						fmt.Println("Message deleted", key, messages.Messages[key].PushText)
-					}
+				if !strings.HasPrefix(messages.Messages[key].PushText, "Удалён участник:") {
+					continue
 				}
+
+				if settings.DryRun {
+					fmt.Println("message will be deleted (dryrun)", key, messages.Messages[key].PushText)
+					continue
+				}
+
+				_, err := client.DeleteMessage(settings.TeamUid, chatUid, messages.Messages[key].MessageId)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println("Message deleted", key, messages.Messages[key].PushText)
 			}
 			if len(messages.Messages) < 200 {
 				break
