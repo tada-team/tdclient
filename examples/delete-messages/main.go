@@ -3,40 +3,31 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/tada-team/tdproto/tdapi"
-	"strings"
-
 	"github.com/tada-team/tdclient"
 	"github.com/tada-team/tdclient/examples"
 	"github.com/tada-team/tdproto"
+	"github.com/tada-team/tdproto/tdapi"
+	"strings"
 )
-
-var messageMap = make(map[string]string)
-var blackValue = make(map[string]string)
 
 func getLastMessageId(messages tdproto.ChatMessages) string {
 	return messages.Messages[len(messages.Messages)-1].MessageId
 }
 
-func messageMapUpdate(messages tdproto.ChatMessages) {
-	for key := range messages.Messages {
-		messageMap[messages.Messages[key].MessageId] = messages.Messages[key].Content.Text
-	}
-}
+func filterMessages(text string) bool{
+	result := false
 
-func filterMessages() {
-	for key := range messageMap {
-		var text = messageMap[key]
-		s := strings.Split(text, ":")[0]
+	s := strings.Split(text, ":")[0]
 
-		if s == "Удалён участник" {
-			blackValue[key] = text
-		}
+	if s == "Удалён участник" {
+		result = true
 	}
+
+	return result
 }
 
 func main() {
-	depth := flag.Int("depth", 5, "depth degree")
+	date := flag.String("date", "01-01-2020", "last date")
 
 	settings := examples.NewSettings()
 	settings.RequireToken()
@@ -55,58 +46,40 @@ func main() {
 
 	chatUid := *tdproto.NewJID(settings.Chat)
 
-	messages, err := client.GetMessages(settings.TeamUid, chatUid, &tdapi.MessageFilter{
-		UserParams: tdapi.UserParams{
-			Lang: "ru",
-		},
-		Paginator: tdapi.Paginator{
-			Limit: 200,
-		},
-	})
-	if err != nil {
-		panic(err)
-	}
+	var lastMsgId = ""
 
-	messageMapUpdate(messages)
-	var lastMsgId = getLastMessageId(messages)
-
-	for i := 0; i < *depth; i++ {
-		fmt.Println("Загружаем страницу", i, lastMsgId)
-		messagesOld, err := client.GetMessages(settings.TeamUid, chatUid, &tdapi.MessageFilter{
-			UserParams: tdapi.UserParams{
-				Lang: "ru",
-			},
-			Paginator: tdapi.Paginator{
-				Limit: 200,
-			},
-			OldFrom: lastMsgId,
-		})
+	for {
+		filter := new(tdapi.MessageFilter)
+		filter.Lang = "ru"
+		filter.Limit = 200
+		filter.OldFrom = lastMsgId
+		filter.Type = "change"
+		filter.DateTo = *date
+		messages, err := client.GetMessages(settings.TeamUid, chatUid, filter)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("На странице", len(messagesOld.Messages))
+		if len(messages.Messages) != 0 {
+			lastMsgId = getLastMessageId(messages)
 
-		lastMsgId = getLastMessageId(messagesOld)
-		messageMapUpdate(messagesOld)
-	}
-
-	fmt.Println("Сообщений всего загружено", len(messageMap))
-	filterMessages()
-	fmt.Println("Кандидатов на удаление", len(blackValue))
-
-	if len(blackValue) > 0 {
-		for key := range blackValue {
-			if settings.DryRun {
-				fmt.Println("сообщение будет удалено (dryrun)", key, blackValue[key])
-			} else {
-				_, err := client.DeleteMessage(settings.TeamUid, chatUid, key)
-				if err != nil {
-					panic(err)
+			for key := range messages.Messages {
+				if filterMessages(messages.Messages[key].PushText){
+					if settings.DryRun {
+						fmt.Println("message will be deleted (dryrun)", key, messages.Messages[key].PushText)
+					} else {
+						_, err := client.DeleteMessage(settings.TeamUid, chatUid, messages.Messages[key].MessageId)
+						if err != nil {
+							panic(err)
+						}
+						fmt.Println("Message deleted", key, messages.Messages[key].PushText)
+					}
 				}
-				fmt.Println("сообщение удалено", key, blackValue[key])
 			}
+			if len(messages.Messages) < 200 {
+				break
+			}
+		}else{
+			break
 		}
-	} else {
-		fmt.Println("Нет системных сообщений для удаления")
 	}
 }
