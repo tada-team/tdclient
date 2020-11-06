@@ -27,7 +27,7 @@ func filterMessages(text string) bool{
 }
 
 func main() {
-	date := flag.String("date", "01-01-2020", "last date")
+	date := flag.String("date", "2017-12-31", "last date")
 
 	settings := examples.NewSettings()
 	settings.RequireToken()
