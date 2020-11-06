@@ -102,14 +102,10 @@ func TestSession(t *testing.T) {
 		}
 
 		t.Run("get messages", func(t *testing.T) {
-			messages, err := c.GetMessages(team.Uid, newContact.Jid, &tdapi.MessageFilter{
-				UserParams: tdapi.UserParams{
-					Lang: "ru",
-				},
-				Paginator: tdapi.Paginator{
-					Limit: 200,
-				},
-			})
+			filter := new(tdapi.MessageFilter)
+			filter.Lang = "ru"
+			filter.Limit = 200
+			messages, err := c.GetMessages(team.Uid, newContact.Jid, filter)
 			if err != nil {
 				t.Fatal(err)
 			}
