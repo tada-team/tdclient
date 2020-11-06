@@ -91,11 +91,36 @@ func TestSession(t *testing.T) {
 		}
 	})
 
-	t.Run("http message smoke test", func(t *testing.T) {
-		_, err := c.SendPlaintextMessage(team.Uid, newContact.Jid, kozma.Say())
+	t.Run("messages", func(t *testing.T) {
+		message, err := c.SendPlaintextMessage(team.Uid, newContact.Jid, kozma.Say())
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		if message.Chat != newContact.Jid {
+			t.Error("invalid send message:", newContact.Jid)
+		}
+
+		t.Run("get messages", func(t *testing.T) {
+			filter := new(tdapi.MessageFilter)
+			filter.Lang = "ru"
+			filter.Limit = 200
+			messages, err := c.GetMessages(team.Uid, newContact.Jid, filter)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(messages) < 1 {
+				t.Error("invalid get messages:", len(messages))
+			}
+		})
+
+		t.Run("delete messages", func(t *testing.T) {
+			_, err := c.DeleteMessage(team.Uid, newContact.Jid, message.MessageId)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
+
 	})
 
 	t.Run("me smoke test", func(t *testing.T) {

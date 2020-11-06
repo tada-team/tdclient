@@ -9,14 +9,16 @@ import (
 )
 
 type settings struct {
-	Server       string
-	Verbose      bool
-	TeamUid      string
-	Chat         string
-	Token        string
-	requireTeam  bool
-	requireChat  bool
-	requireToken bool
+	Server        string
+	Verbose       bool
+	TeamUid       string
+	Chat          string
+	Token         string
+	DryRun        bool
+	requireTeam   bool
+	requireChat   bool
+	requireToken  bool
+	requireDryRun bool
 }
 
 func NewSettings() settings { return settings{} }
@@ -34,6 +36,11 @@ func (s *settings) RequireChat() {
 func (s *settings) RequireToken() {
 	flag.StringVar(&s.Token, "token", "", "bot or user token")
 	s.requireToken = true
+}
+
+func (s *settings) RequireDryRun() {
+	flag.BoolVar(&s.DryRun, "dryrun", false, "read or del pull")
+	s.requireDryRun = true
 }
 
 func (s *settings) Parse() {
