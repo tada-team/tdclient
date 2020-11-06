@@ -3,28 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strings"
+
 	"github.com/tada-team/tdclient"
 	"github.com/tada-team/tdclient/examples"
 	"github.com/tada-team/tdproto"
 	"github.com/tada-team/tdproto/tdapi"
-	"strings"
 )
-
-func getLastMessageId(messages tdproto.ChatMessages) string {
-	return messages.Messages[len(messages.Messages)-1].MessageId
-}
-
-func filterMessages(text string) bool{
-	result := false
-
-	s := strings.Split(text, ":")[0]
-
-	if s == "Удалён участник" {
-		result = true
-	}
-
-	return result
-}
 
 func main() {
 	date := flag.String("date", "2017-12-31", "last date")
@@ -63,7 +48,7 @@ func main() {
 			lastMsgId = getLastMessageId(messages)
 
 			for key := range messages.Messages {
-				if filterMessages(messages.Messages[key].PushText){
+				if strings.HasPrefix(messages.Messages[key].PushText, "Удалён участник:") {
 					if settings.DryRun {
 						fmt.Println("message will be deleted (dryrun)", key, messages.Messages[key].PushText)
 					} else {
@@ -78,8 +63,12 @@ func main() {
 			if len(messages.Messages) < 200 {
 				break
 			}
-		}else{
+		} else {
 			break
 		}
 	}
+}
+
+func getLastMessageId(messages tdproto.ChatMessages) string {
+	return messages.Messages[len(messages.Messages)-1].MessageId
 }
