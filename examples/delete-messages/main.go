@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/tada-team/dateparse"
 	"github.com/tada-team/tdclient"
 	"github.com/tada-team/tdclient/examples"
 	"github.com/tada-team/tdproto"
@@ -21,6 +23,12 @@ func main() {
 	settings.RequireDryRun()
 	settings.Parse()
 
+	dt, _ := dateparse.Parse(*date, nil)
+	if dt.IsZero() {
+		fmt.Println("invalid date")
+		os.Exit(0)
+	}
+
 	client, err := tdclient.NewSession(settings.Server)
 	if err != nil {
 		panic(err)
@@ -29,47 +37,48 @@ func main() {
 	client.SetToken(settings.Token)
 	client.SetVerbose(settings.Verbose)
 
+	var numProcessed int
+
 	chatUid := *tdproto.NewJID(settings.Chat)
 
-	var lastMsgId = ""
+	filter := new(tdapi.MessageFilter)
+	filter.Lang = "ru"
+	filter.Limit = 200
+	filter.Type = tdproto.MediatypeChange
+	filter.DateTo = tdproto.IsoDatetime(dt)
+
 	for {
-		filter := new(tdapi.MessageFilter)
-		filter.Lang = "ru"
-		filter.Limit = 200
-		filter.OldFrom = lastMsgId
-		filter.Type = "change"
-		filter.DateTo = *date
 		messages, err := client.GetMessages(settings.TeamUid, chatUid, filter)
 		if err != nil {
 			panic(err)
 		}
-		if len(messages.Messages) != 0 {
-			lastMsgId = getLastMessageId(messages)
-			for key := range messages.Messages {
-				if !strings.HasPrefix(messages.Messages[key].PushText, "Удалён участник:") {
-					continue
-				}
 
-				if settings.DryRun {
-					fmt.Println("message will be deleted (dryrun)", key, messages.Messages[key].PushText)
-					continue
-				}
+		if len(messages.Messages) == 0 {
+			break
+		}
 
-				_, err := client.DeleteMessage(settings.TeamUid, chatUid, messages.Messages[key].MessageId)
-				if err != nil {
-					panic(err)
-				}
-				fmt.Println("Message deleted", key, messages.Messages[key].PushText)
+		filter.OldFrom = messages.Messages[len(messages.Messages)-1].MessageId
+		for _, m := range messages.Messages {
+			if !strings.HasPrefix(m.PushText, "Удалён участник:") {
+				continue
 			}
-			if len(messages.Messages) < 200 {
-				break
+
+			numProcessed++
+
+			if settings.DryRun {
+				fmt.Println("message will be deleted (dryrun):", numProcessed, m.PushText)
+				continue
 			}
-		} else {
+
+			if _, err := client.DeleteMessage(settings.TeamUid, chatUid, m.MessageId); err != nil {
+				panic(err)
+			}
+
+			fmt.Println("message deleted:", numProcessed, m.PushText)
+		}
+
+		if len(messages.Messages) < filter.Limit {
 			break
 		}
 	}
-}
-
-func getLastMessageId(messages tdproto.ChatMessages) string {
-	return messages.Messages[len(messages.Messages)-1].MessageId
 }
