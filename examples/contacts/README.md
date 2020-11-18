@@ -24,8 +24,7 @@ GET `https://web.tada.team/api/v4/teams/<team-id>/contacts/`
             "can_call": true,
             "can_create_task": true,
             "can_add_to_group": true,
-            "changeable_fields": [],
-            "asterisk_mention": null
+            "changeable_fields": []
         },
         {
             "jid": "d-c2e2c240-2630-4056-9973-40d367dcaf1f",
@@ -46,8 +45,7 @@ GET `https://web.tada.team/api/v4/teams/<team-id>/contacts/`
             "can_call": true,
             "can_create_task": true,
             "can_add_to_group": true,
-            "changeable_fields": [],
-            "asterisk_mention": null
+            "changeable_fields": []
         },
         {
             "jid": "d-b5704414-f78c-4a77-8e00-c1593d398bc0",
@@ -149,8 +147,7 @@ GET `https://web.tada.team/api/v4/teams/<team-id>/contacts/`
             "botname": "notebot",
             "sections": [],
             "can_send_message": true,
-            "changeable_fields": [],
-            "asterisk_mention": null
+            "changeable_fields": []
         },
     ]
 }
