@@ -15,5 +15,6 @@ require (
 	github.com/tada-team/dateparse v0.5.4
 	github.com/tada-team/kozma v1.1.0
 	github.com/tada-team/tdproto v1.12.6
+	github.com/tealeg/xlsx/v3 v3.2.3
 	github.com/vmihailenco/msgpack/v5 v5.0.0-rc.2 // indirect
 )
