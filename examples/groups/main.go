@@ -18,7 +18,6 @@ func main() {
 	settings.RequireToken()
 	settings.RequireTeam()
 	settings.RequireChat()
-	settings.RequireDryRun()
 	settings.Parse()
 
 	session, err := tdclient.NewSession(settings.Server)
