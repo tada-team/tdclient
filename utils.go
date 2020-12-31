@@ -68,7 +68,7 @@ func NewPeerConnection(login string, iceServer string) (peerConnection *webrtc.P
 func GetIceServer(host string) (string, error) {
 	req, err := http.NewRequest(http.MethodGet, host+"/features.json", nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create new http request", err)
+		return "", fmt.Errorf("failed to create new http request: %v", err)
 	}
 
 	cli := http.Client{
