@@ -2,6 +2,7 @@ package tdclient
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -74,9 +75,12 @@ func (s *Session) SetVerbose(v bool) {
 func (s Session) httpClient() *http.Client {
 	return &http.Client{
 		Timeout: s.Timeout,
-		//Transport: &http.Transport{
-		//	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		//},
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				// InsecureSkipVerify: true,
+				MinVersion: tls.VersionTLS12,
+			},
+		},
 	}
 }
 
