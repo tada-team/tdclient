@@ -80,6 +80,7 @@ func (s Session) httpClient() *http.Client {
 				// InsecureSkipVerify: true,
 				MinVersion: tls.VersionTLS12,
 			},
+			ForceAttemptHTTP2: true,
 		},
 	}
 }
