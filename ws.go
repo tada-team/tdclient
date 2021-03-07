@@ -5,16 +5,19 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
+	"github.com/tada-team/timerpool"
 	"github.com/valyala/fastjson"
 )
 
-var Timeout = errors.New("Timeout")
+var (
+	Timeout     = errors.New("Timeout")
+	defaultSize = 20
+)
 
 func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 	if s.token == "" {
@@ -33,13 +36,12 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 	}
 
 	w := &WsSession{
-		session:   s,
-		team:      team,
-		conn:      conn,
-		inbox:     make(chan serverEvent, 100),
-		outEvents: make(chan tdproto.Event, 100),
-		outBytes:  make(chan []byte, 100),
-		fail:      make(chan error),
+		session:  s,
+		team:     team,
+		conn:     conn,
+		inbox:    make(chan serverEvent, defaultSize),
+		outBytes: make(chan []byte, defaultSize),
+		fail:     make(chan error),
 	}
 
 	go func() {
@@ -64,19 +66,18 @@ type serverEvent struct {
 }
 
 type WsSession struct {
-	session   *Session
-	team      string
-	conn      *websocket.Conn
-	closed    bool
-	inbox     chan serverEvent
-	outEvents chan tdproto.Event
-	outBytes  chan []byte
-	fail      chan error
+	session  *Session
+	team     string
+	conn     *websocket.Conn
+	closed   bool
+	inbox    chan serverEvent
+	outBytes chan []byte
+	fail     chan error
 }
 
 func (w *WsSession) Ping() string {
 	confirmId := tdproto.ConfirmId()
-	w.SendRaw(XNewClientPing(confirmId))
+	w.SendRaw(xNewClientPing(confirmId))
 	return confirmId
 }
 
@@ -116,6 +117,10 @@ func (w *WsSession) WaitForConfirm() (string, error) {
 
 func (w *WsSession) WaitFor(v tdproto.Event) error {
 	name := v.GetName()
+
+	timer := timerpool.Get(w.session.Timeout)
+	defer timerpool.Release(timer)
+
 	for {
 		select {
 		case ev := <-w.inbox:
@@ -143,14 +148,18 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 				w.fail <- fmt.Errorf("server panic: %s", t.Params.Code)
 				return nil
 			}
-		case <-time.After(w.session.Timeout):
+		case <-timer.C:
 			return Timeout
 		}
 	}
 }
 
 func (w *WsSession) Send(event tdproto.Event) string {
-	w.outEvents <- event
+	b, err := JSON.Marshal(event)
+	if err != nil {
+		w.fail <- errors.Wrap(err, "json marshal fail")
+	}
+	w.SendRaw(b)
 	return event.GetConfirmId()
 }
 
@@ -172,13 +181,6 @@ func (w *WsSession) outboxLoop() {
 				w.fail <- errors.Wrap(err, "ws client fail")
 				return
 			}
-		case e := <-w.outEvents:
-			b, err := JSON.Marshal(e)
-			if err != nil {
-				w.fail <- errors.Wrap(err, "json marshal fail")
-				return
-			}
-			w.outBytes <- b
 		}
 	}
 }

@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
-	"time"
-
 	"log"
 	"math/rand"
+	"net/http"
+	"time"
 
 	"github.com/pion/webrtc/v2"
 	"github.com/tada-team/tdproto"
