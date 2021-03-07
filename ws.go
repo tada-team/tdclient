@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
+	"github.com/valyala/fastjson"
 )
 
 var Timeout = errors.New("Timeout")
@@ -183,6 +184,7 @@ func (w *WsSession) outboxLoop() {
 }
 
 func (w WsSession) inboxLoop() {
+	var parser fastjson.Parser
 	for !w.closed {
 		_, data, err := w.conn.ReadMessage()
 		if err != nil {
@@ -190,31 +192,21 @@ func (w WsSession) inboxLoop() {
 			return
 		}
 
-		v := new(tdproto.BaseEvent)
-		if err := JSON.Unmarshal(data, v); err != nil {
+		v, err := parser.ParseBytes(data)
+		if err != nil {
 			w.fail <- errors.Wrap(err, "invalid json")
 			return
 		}
 
-		eventName := v.Name
-		confirmId := v.GetConfirmId()
-
-		//v, err := fastjson.ParseBytes(data)
-		//if err != nil {
-		//	w.fail <- errors.Wrap(err, "invalid json")
-		//	return
-		//}
-		//
-		//eventName := v.GetStringBytes("event")
-		//confirmId := v.GetStringBytes("confirm_id")
-
-		if len(confirmId) > 0 {
-			w.Send(tdproto.NewClientConfirm(string(confirmId)))
-		}
-
+		eventName := v.GetStringBytes("event")
 		w.inbox <- serverEvent{
 			name: string(eventName),
 			raw:  data,
+		}
+
+		confirmId := v.GetStringBytes("confirm_id")
+		if len(confirmId) > 0 {
+			w.Send(tdproto.NewClientConfirm(string(confirmId)))
 		}
 	}
 }
