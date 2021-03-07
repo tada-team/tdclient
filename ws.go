@@ -32,12 +32,13 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 	}
 
 	w := &WsSession{
-		session: s,
-		team:    team,
-		conn:    conn,
-		inbox:   make(chan serverEvent, 100),
-		outbox:  make(chan tdproto.Event, 100),
-		fail:    make(chan error),
+		session:   s,
+		team:      team,
+		conn:      conn,
+		inbox:     make(chan serverEvent, 100),
+		outEvents: make(chan tdproto.Event, 100),
+		outBytes:  make(chan []byte, 100),
+		fail:      make(chan error),
 	}
 
 	go func() {
@@ -62,17 +63,20 @@ type serverEvent struct {
 }
 
 type WsSession struct {
-	session *Session
-	team    string
-	conn    *websocket.Conn
-	closed  bool
-	inbox   chan serverEvent
-	outbox  chan tdproto.Event
-	fail    chan error
+	session   *Session
+	team      string
+	conn      *websocket.Conn
+	closed    bool
+	inbox     chan serverEvent
+	outEvents chan tdproto.Event
+	outBytes  chan []byte
+	fail      chan error
 }
 
 func (w *WsSession) Ping() string {
-	return w.Send(tdproto.NewClientPing())
+	confirmId := tdproto.ConfirmId()
+	w.SendRaw(XNewClientPing(confirmId))
+	return confirmId
 }
 
 func (w *WsSession) SendPlainMessage(to tdproto.JID, text string) string {
@@ -101,7 +105,8 @@ func (w *WsSession) WaitForMessage() (tdproto.Message, bool, error) {
 }
 
 func (w *WsSession) WaitForConfirm() (string, error) {
-	v := new(tdproto.ServerConfirm)
+	v := getServerConfirm()
+	defer releaseServerConfirm(v)
 	if err := w.WaitFor(v); err != nil {
 		return "", err
 	}
@@ -144,8 +149,12 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 }
 
 func (w *WsSession) Send(event tdproto.Event) string {
-	w.outbox <- event
+	w.outEvents <- event
 	return event.GetConfirmId()
+}
+
+func (w *WsSession) SendRaw(b []byte) {
+	w.outBytes <- b
 }
 
 func (w *WsSession) Close() error {
@@ -155,18 +164,20 @@ func (w *WsSession) Close() error {
 
 func (w *WsSession) outboxLoop() {
 	for !w.closed {
-		event := <-w.outbox
-
-		b, err := JSON.Marshal(event)
-		if err != nil {
-			w.fail <- errors.Wrap(err, "json marshal fail")
-			return
-		}
-
-		w.session.logger.Println("send:", string(b))
-		if err := w.conn.WriteMessage(websocket.BinaryMessage, b); err != nil {
-			w.fail <- errors.Wrap(err, "ws client fail")
-			return
+		select {
+		case b := <-w.outBytes:
+			w.session.logger.Println("send:", string(b))
+			if err := w.conn.WriteMessage(websocket.BinaryMessage, b); err != nil {
+				w.fail <- errors.Wrap(err, "ws client fail")
+				return
+			}
+		case e := <-w.outEvents:
+			b, err := JSON.Marshal(e)
+			if err != nil {
+				w.fail <- errors.Wrap(err, "json marshal fail")
+				return
+			}
+			w.outBytes <- b
 		}
 	}
 }
@@ -180,17 +191,29 @@ func (w WsSession) inboxLoop() {
 		}
 
 		v := new(tdproto.BaseEvent)
-		if err := JSON.Unmarshal(data, &v); err != nil {
-			w.fail <- errors.Wrap(err, "json fail")
+		if err := JSON.Unmarshal(data, v); err != nil {
+			w.fail <- errors.Wrap(err, "invalid json")
 			return
 		}
 
-		if v.ConfirmId != "" {
-			w.Send(tdproto.NewClientConfirm(v.ConfirmId))
+		eventName := v.Name
+		confirmId := v.GetConfirmId()
+
+		//v, err := fastjson.ParseBytes(data)
+		//if err != nil {
+		//	w.fail <- errors.Wrap(err, "invalid json")
+		//	return
+		//}
+		//
+		//eventName := v.GetStringBytes("event")
+		//confirmId := v.GetStringBytes("confirm_id")
+
+		if len(confirmId) > 0 {
+			w.Send(tdproto.NewClientConfirm(string(confirmId)))
 		}
 
 		w.inbox <- serverEvent{
-			name: v.Name,
+			name: string(eventName),
 			raw:  data,
 		}
 	}
