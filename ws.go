@@ -194,21 +194,25 @@ func (w WsSession) inboxLoop() {
 			return
 		}
 
+		w.session.logger.Println("got:", string(data))
 		v, err := parser.ParseBytes(data)
 		if err != nil {
-			w.fail <- errors.Wrap(err, "invalid json")
+			w.fail <- errors.Wrapf(err, "invalid json: `%s`", string(data))
 			return
 		}
 
-		eventName := v.GetStringBytes("event")
-		w.inbox <- serverEvent{
-			name: string(eventName),
-			raw:  data,
+		confirmId := string(v.GetStringBytes("confirm_id"))
+		if confirmId != "" {
+			w.SendRaw(xNewClientConfirm(confirmId))
 		}
 
-		confirmId := v.GetStringBytes("confirm_id")
-		if len(confirmId) > 0 {
-			w.Send(tdproto.NewClientConfirm(string(confirmId)))
+		select {
+		case w.inbox <- serverEvent{
+			name: string(v.GetStringBytes("event")),
+			raw:  data,
+		}:
+		default:
+			w.fail <- errors.Wrapf(err, "full inbox")
 		}
 	}
 }
