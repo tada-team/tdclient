@@ -77,7 +77,7 @@ type WsSession struct {
 
 func (w *WsSession) Ping() string {
 	confirmId := tdproto.ConfirmId()
-	w.SendRaw(xNewClientPing(confirmId))
+	w.SendRaw(tdproto.XClientPing(confirmId))
 	return confirmId
 }
 
@@ -203,7 +203,7 @@ func (w WsSession) inboxLoop() {
 
 		confirmId := string(v.GetStringBytes("confirm_id"))
 		if confirmId != "" {
-			w.SendRaw(xNewClientConfirm(confirmId))
+			w.SendRaw(tdproto.XClientConfirm(confirmId))
 		}
 
 		select {

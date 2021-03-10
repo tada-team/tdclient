@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/tada-team/dateparse v0.5.4
 	github.com/tada-team/kozma v1.1.0
-	github.com/tada-team/tdproto v1.12.6
+	github.com/tada-team/tdproto v1.25.0
 	github.com/tada-team/timerpool v1.0.0
 	github.com/tealeg/xlsx/v3 v3.2.3
 	github.com/valyala/fastjson v1.6.3
