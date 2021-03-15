@@ -1,13 +1,9 @@
 package tdclient
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
-	"net/http"
-	"time"
 
 	"github.com/pion/webrtc/v2"
 	"github.com/tada-team/tdproto"
@@ -62,42 +58,6 @@ func NewPeerConnection(login string, iceServer string) (peerConnection *webrtc.P
 	})
 
 	return peerConnection, offer, outputTrack, nil
-}
-
-func GetIceServer(host string) (string, error) {
-	req, err := http.NewRequest(http.MethodGet, host+"/features.json", nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create new http request: %v", err)
-	}
-
-	cli := http.Client{
-		Timeout: time.Second * 2,
-	}
-	res, getErr := cli.Do(req)
-	if getErr != nil {
-		return "", fmt.Errorf("failed to get features.json: %v", err)
-	}
-
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		return "", fmt.Errorf("failed to read request body: %v", readErr)
-	}
-
-	features := tdproto.Features{}
-	jsonErr := json.Unmarshal(body, &features)
-	if jsonErr != nil {
-		return "", fmt.Errorf("failed to unmarshal features json: %v", jsonErr)
-	}
-
-	if len(features.ICEServers) > 0 {
-		return features.ICEServers[0].Urls, nil
-	}
-
-	return "", nil
 }
 
 func SendCallOffer(c *WsSession, userName string, callJid *tdproto.JID, sdp string) (res webrtc.SessionDescription, err error) {
