@@ -36,12 +36,13 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 	}
 
 	w := &WsSession{
-		session:  s,
-		team:     team,
-		conn:     conn,
-		inbox:    make(chan serverEvent, defaultSize),
-		outBytes: make(chan []byte, defaultSize),
-		fail:     make(chan error),
+		session:   s,
+		team:      team,
+		conn:      conn,
+		inbox:     make(chan serverEvent, defaultSize),
+		outBytes:  make(chan []byte, defaultSize),
+		listeners: make(map[string]chan []byte),
+		fail:      make(chan error),
 	}
 
 	go func() {
@@ -66,13 +67,14 @@ type serverEvent struct {
 }
 
 type WsSession struct {
-	session  *Session
-	team     string
-	conn     *websocket.Conn
-	closed   bool
-	inbox    chan serverEvent
-	outBytes chan []byte
-	fail     chan error
+	session   *Session
+	team      string
+	conn      *websocket.Conn
+	closed    bool
+	inbox     chan serverEvent
+	outBytes  chan []byte
+	fail      chan error
+	listeners map[string]chan []byte
 }
 
 func (w *WsSession) Ping() string {
@@ -113,6 +115,12 @@ func (w *WsSession) WaitForConfirm() (string, error) {
 		return "", err
 	}
 	return v.Params.ConfirmId, nil
+}
+
+func (w *WsSession) ListenFor(v tdproto.Event) chan []byte {
+	ch := make(chan []byte, defaultSize)
+	w.listeners[v.GetName()] = ch
+	return ch
 }
 
 func (w *WsSession) WaitFor(v tdproto.Event) error {
@@ -206,11 +214,23 @@ func (w WsSession) inboxLoop() {
 			w.SendRaw(tdproto.XClientConfirm(confirmId))
 		}
 
-		select {
-		case w.inbox <- serverEvent{
+		ev := serverEvent{
 			name: string(v.GetStringBytes("event")),
 			raw:  data,
-		}:
+		}
+
+		ch := w.listeners[ev.name]
+		if ch != nil {
+			select {
+			case ch <- ev.raw:
+			default:
+				w.fail <- fmt.Errorf("listener %s chan is full", ev.name)
+			}
+			continue
+		}
+
+		select {
+		case w.inbox <- ev:
 		default:
 			w.fail <- errors.Wrapf(err, "full inbox")
 		}
