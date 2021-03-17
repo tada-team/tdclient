@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/pion/webrtc/v2"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 	"github.com/tada-team/timerpool"
@@ -236,3 +237,38 @@ func (w WsSession) inboxLoop() {
 		}
 	}
 }
+
+func (w *WsSession) SendCallOffer(jid tdproto.JID, sdp string) (res webrtc.SessionDescription, err error) {
+	callOffer := new(tdproto.ClientCallOffer)
+	callOffer.Name = callOffer.GetName()
+	callOffer.Params.Jid = jid
+	callOffer.Params.Trickle = false
+	callOffer.Params.Sdp = sdp
+	w.Send(callOffer)
+
+	callAnswer := new(tdproto.ServerCallAnswer)
+	if err := w.WaitFor(callAnswer); err != nil {
+		return res, err
+	}
+
+	return webrtc.SessionDescription{
+		Type: webrtc.SDPTypeAnswer,
+		SDP:  callAnswer.Params.JSEP.SDP,
+	}, nil
+}
+
+func (w *WsSession) SendCallLeave(jid tdproto.JID) error {
+	callLeave := new(tdproto.ClientCallLeave)
+	callLeave.Name = callLeave.GetName()
+	callLeave.Params.Jid = jid
+	callLeave.Params.Reason = ""
+	w.Send(callLeave)
+
+	serverLeaveAnswer := new(tdproto.ServerCallLeave)
+	if err := w.WaitFor(serverLeaveAnswer); err != nil {
+		return err
+	}
+
+	return nil
+}
+
