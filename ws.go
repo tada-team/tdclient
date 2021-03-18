@@ -1,6 +1,7 @@
 package tdclient
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -45,6 +46,8 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 		fail:      make(chan error),
 	}
 
+	w.ctx, w.cancel = context.WithCancel(context.Background())
+
 	go func() {
 		err := <-w.fail
 		if err != nil {
@@ -70,11 +73,12 @@ type WsSession struct {
 	session   *Session
 	team      string
 	conn      *websocket.Conn
-	closed    bool
 	inbox     chan serverEvent
 	outBytes  chan []byte
 	fail      chan error
 	listeners map[string]chan []byte
+	ctx       context.Context
+	cancel    context.CancelFunc
 }
 
 func (w *WsSession) Ping() string {
@@ -176,13 +180,15 @@ func (w *WsSession) SendRaw(b []byte) {
 }
 
 func (w *WsSession) Close() error {
-	w.closed = true
+	w.cancel()
 	return w.conn.Close()
 }
 
 func (w *WsSession) outboxLoop() {
-	for !w.closed {
+	for {
 		select {
+		case <-w.ctx.Done():
+			return
 		case b := <-w.outBytes:
 			w.session.logger.Println("send:", string(b))
 			if err := w.conn.WriteMessage(websocket.BinaryMessage, b); err != nil {
@@ -193,12 +199,14 @@ func (w *WsSession) outboxLoop() {
 	}
 }
 
-func (w WsSession) inboxLoop() {
+func (w *WsSession) inboxLoop() {
 	var parser fastjson.Parser
-	for !w.closed {
+	for {
 		_, data, err := w.conn.ReadMessage()
 		if err != nil {
-			w.fail <- errors.Wrap(err, "conn read fail")
+			if w.ctx.Err() == nil {
+				w.fail <- errors.Wrap(err, "conn read fail")
+			}
 			return
 		}
 
@@ -231,6 +239,8 @@ func (w WsSession) inboxLoop() {
 
 		select {
 		case w.inbox <- ev:
+		case <-w.ctx.Done():
+			return
 		default:
 			w.fail <- errors.Wrapf(err, "full inbox")
 		}
@@ -253,4 +263,3 @@ func (w *WsSession) SendCallLeave(jid tdproto.JID) {
 	callLeave.Params.Reason = ""
 	w.Send(callLeave)
 }
-
