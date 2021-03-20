@@ -13,6 +13,7 @@ jobs:
         with:
           go-version: '1.16'
       - name: Run coverage
+        environment: Test environment
         env:
           TEST_SERVER: ${{ secrets.TEST_SERVER }}
           TEST_ACCOUNT_PHONE: ${{ secrets.TEST_ACCOUNT_PHONE }}
