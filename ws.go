@@ -1,6 +1,7 @@
 package tdclient
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -36,13 +37,16 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 	}
 
 	w := &WsSession{
-		session:  s,
-		team:     team,
-		conn:     conn,
-		inbox:    make(chan serverEvent, defaultSize),
-		outBytes: make(chan []byte, defaultSize),
-		fail:     make(chan error),
+		session:   s,
+		team:      team,
+		conn:      conn,
+		inbox:     make(chan serverEvent, defaultSize),
+		outBytes:  make(chan []byte, defaultSize),
+		listeners: make(map[string]chan []byte),
+		fail:      make(chan error),
 	}
+
+	w.ctx, w.cancel = context.WithCancel(context.Background())
 
 	go func() {
 		err := <-w.fail
@@ -66,13 +70,15 @@ type serverEvent struct {
 }
 
 type WsSession struct {
-	session  *Session
-	team     string
-	conn     *websocket.Conn
-	closed   bool
-	inbox    chan serverEvent
-	outBytes chan []byte
-	fail     chan error
+	session   *Session
+	team      string
+	conn      *websocket.Conn
+	inbox     chan serverEvent
+	outBytes  chan []byte
+	fail      chan error
+	listeners map[string]chan []byte
+	ctx       context.Context
+	cancel    context.CancelFunc
 }
 
 func (w *WsSession) Ping() string {
@@ -113,6 +119,12 @@ func (w *WsSession) WaitForConfirm() (string, error) {
 		return "", err
 	}
 	return v.Params.ConfirmId, nil
+}
+
+func (w *WsSession) ListenFor(v tdproto.Event) chan []byte {
+	ch := make(chan []byte, defaultSize)
+	w.listeners[v.GetName()] = ch
+	return ch
 }
 
 func (w *WsSession) WaitFor(v tdproto.Event) error {
@@ -168,13 +180,15 @@ func (w *WsSession) SendRaw(b []byte) {
 }
 
 func (w *WsSession) Close() error {
-	w.closed = true
+	w.cancel()
 	return w.conn.Close()
 }
 
 func (w *WsSession) outboxLoop() {
-	for !w.closed {
+	for {
 		select {
+		case <-w.ctx.Done():
+			return
 		case b := <-w.outBytes:
 			w.session.logger.Println("send:", string(b))
 			if err := w.conn.WriteMessage(websocket.BinaryMessage, b); err != nil {
@@ -185,12 +199,14 @@ func (w *WsSession) outboxLoop() {
 	}
 }
 
-func (w WsSession) inboxLoop() {
+func (w *WsSession) inboxLoop() {
 	var parser fastjson.Parser
-	for !w.closed {
+	for {
 		_, data, err := w.conn.ReadMessage()
 		if err != nil {
-			w.fail <- errors.Wrap(err, "conn read fail")
+			if w.ctx.Err() == nil {
+				w.fail <- errors.Wrap(err, "conn read fail")
+			}
 			return
 		}
 
@@ -206,13 +222,44 @@ func (w WsSession) inboxLoop() {
 			w.SendRaw(tdproto.XClientConfirm(confirmId))
 		}
 
-		select {
-		case w.inbox <- serverEvent{
+		ev := serverEvent{
 			name: string(v.GetStringBytes("event")),
 			raw:  data,
-		}:
+		}
+
+		ch := w.listeners[ev.name]
+		if ch != nil {
+			select {
+			case ch <- ev.raw:
+			default:
+				w.fail <- fmt.Errorf("listener %s chan is full", ev.name)
+			}
+			continue
+		}
+
+		select {
+		case w.inbox <- ev:
+		case <-w.ctx.Done():
+			return
 		default:
 			w.fail <- errors.Wrapf(err, "full inbox")
 		}
 	}
+}
+
+func (w *WsSession) SendCallOffer(jid tdproto.JID, sdp string) {
+	callOffer := new(tdproto.ClientCallOffer)
+	callOffer.Name = callOffer.GetName()
+	callOffer.Params.Jid = jid
+	callOffer.Params.Trickle = false
+	callOffer.Params.Sdp = sdp
+	w.Send(callOffer)
+}
+
+func (w *WsSession) SendCallLeave(jid tdproto.JID) {
+	callLeave := new(tdproto.ClientCallLeave)
+	callLeave.Name = callLeave.GetName()
+	callLeave.Params.Jid = jid
+	callLeave.Params.Reason = ""
+	w.Send(callLeave)
 }

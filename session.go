@@ -26,12 +26,14 @@ type Session struct {
 	features *tdproto.Features
 }
 
+const defaultTimeout = 10 * time.Second
+
 func NewSession(server string) (Session, error) {
 	s := Session{
-		Timeout: 10 * time.Second,
+		Timeout: defaultTimeout,
+		logger:  log.New(os.Stdout, "tdclient: ", log.LstdFlags|log.Lmicroseconds|log.Lmsgprefix),
 	}
 
-	s.logger = log.New(os.Stdout, "tdclient: ", log.LstdFlags|log.Lmicroseconds|log.Lmsgprefix)
 	s.SetVerbose(false)
 
 	u, err := url.Parse(server)
