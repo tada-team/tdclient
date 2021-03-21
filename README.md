@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tada-team/tdclient.svg?branch=master)](https://travis-ci.org/tada-team/tdclient) [![codecov](https://codecov.io/gh/tada-team/tdclient/branch/master/graph/badge.svg)](https://codecov.io/gh/tada-team/tdclient)
+[![Codecov coverage build](https://github.com/tada-team/tdclient/actions/workflows/codecov.yml/badge.svg)](https://github.com/tada-team/tdclient/actions/workflows/codecov.yml) [![codecov](https://codecov.io/gh/tada-team/tdclient/branch/master/graph/badge.svg)](https://codecov.io/gh/tada-team/tdclient)
 
 # tdclient
 Simple client library.
