@@ -219,6 +219,29 @@ func (s Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, error
 	return resp.Result, nil
 }
 
+// FIXME: move to tdapi
+type tdapiTeam struct {
+	Name string `json:"name"`
+}
+
+// FIXME: open
+func (s Session) createTeam(req tdapiTeam) (tdproto.Team, error) {
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.Team `json:"result"`
+	})
+
+	if err := s.doPost("/api/v4/teams", req, resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, resp.Error
+	}
+
+	return resp.Result, nil
+}
+
 func (s Session) CreateGroup(teamUid string, req tdapi.Group) (tdproto.Chat, error) {
 	resp := new(struct {
 		tdapi.Resp

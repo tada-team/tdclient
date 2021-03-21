@@ -1,6 +1,7 @@
 package tdclient
 
 import (
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -49,9 +50,9 @@ func TestSession(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if len(tokenResp.Me.Teams) == 0 {
-			t.Fatalf("invalid teams number: %d", len(tokenResp.Me.Teams))
-		}
+		//if len(tokenResp.Me.Teams) == 0 {
+		//	t.Fatalf("invalid teams number: %d", len(tokenResp.Me.Teams))
+		//}
 
 		for _, v := range tokenResp.Me.Teams {
 			if v.Me.CanAddToTeam {
@@ -64,7 +65,11 @@ func TestSession(t *testing.T) {
 	})
 
 	if team.Uid == "" {
-		t.Fatal("no valid teams (where i am admin) found")
+		team, err = s.createTeam(tdapiTeam{Name: "tdclient test"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		log.Println("new team created:", team.Uid)
 	}
 
 	var newContact tdproto.Contact
