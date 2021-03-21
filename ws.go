@@ -25,7 +25,7 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 	}
 
 	u := s.server
-	u.Path = fmt.Sprintf("/messaging/%s", team)
+	u.Path = "/messaging/" + team
 	u.Scheme = strings.Replace(u.Scheme, "http", "ws", 1)
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), http.Header{
 		"token": []string{s.token},

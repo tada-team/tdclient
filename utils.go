@@ -3,7 +3,7 @@ package tdclient
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -82,7 +82,7 @@ func GetIceServer(host string) (string, error) {
 		defer res.Body.Close()
 	}
 
-	body, readErr := ioutil.ReadAll(res.Body)
+	body, readErr := io.ReadAll(res.Body)
 	if readErr != nil {
 		return "", fmt.Errorf("failed to read request body: %v", readErr)
 	}

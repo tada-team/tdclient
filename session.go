@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -68,7 +68,7 @@ func (s *Session) SetVerbose(v bool) {
 	if v {
 		s.logger.SetOutput(os.Stdout)
 	} else {
-		s.logger.SetOutput(ioutil.Discard)
+		s.logger.SetOutput(io.Discard)
 	}
 }
 
@@ -145,7 +145,7 @@ func (s Session) doRaw(method, path string, params, data, v interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	respData, err := ioutil.ReadAll(resp.Body)
+	respData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return errors.Wrap(err, "read body fail")
 	}
