@@ -56,6 +56,7 @@ github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/iancoleman/strcase v0.1.2/go.mod h1:SK73tn/9oHe+/Y0h39VT4UCxmurVJkR5NA7kMEAOgSE=
+github.com/iancoleman/strcase v0.1.3/go.mod h1:SK73tn/9oHe+/Y0h39VT4UCxmurVJkR5NA7kMEAOgSE=
 github.com/json-iterator/go v1.1.10 h1:Kz6Cvnvv2wGdaG/V8yMvfkmNiXq9Ya2KUv4rouJJr68=
 github.com/json-iterator/go v1.1.10/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
 github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a h1:FaWFmfWdAUKbSCtOU2QjDaorUexogfaMgbipgYATUMU=
@@ -152,10 +153,14 @@ github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/tada-team/dateparse v0.5.4 h1:DnxGfSU/M5zkcF28brs/lYY5w3W+qJ8s7cozNh4ULSg=
 github.com/tada-team/dateparse v0.5.4/go.mod h1:zUlTI4tyGEYSKzHJ3Bh+F1MR77L22OpEyLPG4nODAkM=
+github.com/tada-team/dateparse v0.6.1 h1:QtKnjuUFDCdpUMc5Dh8aD4OkhLKJM4xcFpUXylO1QQQ=
+github.com/tada-team/dateparse v0.6.1/go.mod h1:zUlTI4tyGEYSKzHJ3Bh+F1MR77L22OpEyLPG4nODAkM=
 github.com/tada-team/kozma v1.1.0 h1:BGwxSK43Dpr6wKoXVTVbdfoTFTptOEhxmni6aCOreJU=
 github.com/tada-team/kozma v1.1.0/go.mod h1:TIsa1b64SsrVPFEqdoJDnMhO3HYFVpN0B0t2GKh93uY=
 github.com/tada-team/tdproto v1.25.0 h1:4rnY89m+qGsQs6CKdjA9sd+MdBIvy/FVmyaenV1lvV4=
 github.com/tada-team/tdproto v1.25.0/go.mod h1:+dLqh9Mn8Pcu7QgvPdErtNzO0O2utYRdT5QUN/y7Bbc=
+github.com/tada-team/tdproto v1.27.4 h1:NjQ+Bw79mDUSyJt+BFuvxHYwffDeDJZ1fsI/TA4U2UU=
+github.com/tada-team/tdproto v1.27.4/go.mod h1:8d0h10L1RnTE2ZkKSMBOoEeQiqlYn7+WwJ4gz2v7Vok=
 github.com/tada-team/timerpool v1.0.0 h1:TCXOQNiOWqSHK6KPKgKJYuO/YdcZ825EF9U0l1MunIE=
 github.com/tada-team/timerpool v1.0.0/go.mod h1:MmEH36Zgih5FrFzbl7kc8FmcbhNV56sWy+ovcFHgxXA=
 github.com/tealeg/xlsx/v3 v3.2.3 h1:MXnVh+9Y8cUglowItTy2HL3Kv6z+q/0aNjeKuTsVqZQ=

@@ -17,8 +17,18 @@ import (
 	"github.com/tada-team/tdproto"
 )
 
+var httpClient = &http.Client{
+	Timeout: 10 * time.Second,
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			// InsecureSkipVerify: true,
+			MinVersion: tls.VersionTLS12,
+		},
+		ForceAttemptHTTP2: true,
+	},
+}
+
 type Session struct {
-	Timeout  time.Duration
 	logger   *log.Logger
 	server   url.URL
 	token    string
@@ -26,23 +36,20 @@ type Session struct {
 	features *tdproto.Features
 }
 
-const defaultTimeout = 10 * time.Second
-
-func NewSession(server string) (Session, error) {
-	s := Session{
-		Timeout: defaultTimeout,
-		logger:  log.New(os.Stdout, "tdclient: ", log.LstdFlags|log.Lmicroseconds|log.Lmsgprefix),
+func NewSession(server string) (*Session, error) {
+	s := &Session{
+		logger: log.New(os.Stdout, "tdclient: ", log.LstdFlags|log.Lmicroseconds|log.Lmsgprefix),
 	}
 
 	s.SetVerbose(false)
 
 	u, err := url.Parse(server)
 	if err != nil {
-		return Session{}, err
+		return nil, err
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return Session{}, fmt.Errorf("invalid scheme: %s", u.Scheme)
+		return nil, fmt.Errorf("invalid scheme: %s", u.Scheme)
 	}
 	s.server = *u
 
@@ -74,34 +81,19 @@ func (s *Session) SetVerbose(v bool) {
 	}
 }
 
-func (s Session) httpClient() *http.Client {
-	return &http.Client{
-		Timeout: s.Timeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				// InsecureSkipVerify: true,
-				MinVersion: tls.VersionTLS12,
-			},
-			ForceAttemptHTTP2: true,
-		},
-	}
-}
-
-func (s Session) doGet(path string, params interface{}, resp interface{}) error {
+func (s *Session) doGet(path string, params interface{}, resp interface{}) error {
 	return s.doRaw("GET", path, params, nil, resp)
 }
 
-func (s Session) doPost(path string, data, v interface{}) error {
+func (s *Session) doPost(path string, data, v interface{}) error {
 	return s.doRaw("POST", path, nil, data, v)
 }
 
-func (s Session) doDelete(path string, resp interface{}) error {
+func (s *Session) doDelete(path string, resp interface{}) error {
 	return s.doRaw("DELETE", path, nil, nil, resp)
 }
 
-func (s Session) doRaw(method, path string, params, data, v interface{}) error {
-	client := s.httpClient()
-
+func (s *Session) doRaw(method, path string, params, data, v interface{}) error {
 	var u = s.server
 	u.Path = path
 	if params != nil {
@@ -141,7 +133,7 @@ func (s Session) doRaw(method, path string, params, data, v interface{}) error {
 		req.Header.Set("token", s.token)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "client do fail")
 	}

@@ -130,7 +130,7 @@ func (w *WsSession) ListenFor(v tdproto.Event) chan []byte {
 func (w *WsSession) WaitFor(v tdproto.Event) error {
 	name := v.GetName()
 
-	timer := timerpool.Get(w.session.Timeout)
+	timer := timerpool.Get(httpClient.Timeout)
 	defer timerpool.Release(timer)
 
 	for {

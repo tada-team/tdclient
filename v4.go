@@ -9,7 +9,7 @@ import (
 	"github.com/tada-team/tdproto/tdapi"
 )
 
-func (s Session) Ping() error {
+func (s *Session) Ping() error {
 	resp := new(struct {
 		tdapi.Resp
 		Result string `json:"result"`
@@ -17,7 +17,7 @@ func (s Session) Ping() error {
 	return s.doGet("/api/v4/ping", nil, resp)
 }
 
-func (s Session) Me(teamUid string) (tdproto.Contact, error) {
+func (s *Session) Me(teamUid string) (tdproto.Contact, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.Team `json:"result"`
@@ -38,7 +38,7 @@ func (s Session) Me(teamUid string) (tdproto.Contact, error) {
 	return resp.Result.Me, nil
 }
 
-func (s Session) Contacts(teamUid string) ([]tdproto.Contact, error) {
+func (s *Session) Contacts(teamUid string) ([]tdproto.Contact, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result []tdproto.Contact `json:"result"`
@@ -59,7 +59,7 @@ func (s Session) Contacts(teamUid string) ([]tdproto.Contact, error) {
 	return resp.Result, nil
 }
 
-func (s Session) AddContact(teamUid string, phone string) (tdproto.Contact, error) {
+func (s *Session) AddContact(teamUid string, phone string) (tdproto.Contact, error) {
 	req := map[string]interface{}{
 		"phone": phone,
 	}
@@ -80,7 +80,7 @@ func (s Session) AddContact(teamUid string, phone string) (tdproto.Contact, erro
 	return resp.Result, nil
 }
 
-func (s Session) AuthBySmsSendCode(phone string) (tdapi.SmsCode, error) {
+func (s *Session) AuthBySmsSendCode(phone string) (tdapi.SmsCode, error) {
 	req := map[string]interface{}{
 		"phone": phone,
 	}
@@ -101,7 +101,7 @@ func (s Session) AuthBySmsSendCode(phone string) (tdapi.SmsCode, error) {
 	return resp.Result, nil
 }
 
-func (s Session) AuthBySmsGetToken(phone, code string) (tdapi.Auth, error) {
+func (s *Session) AuthBySmsGetToken(phone, code string) (tdapi.Auth, error) {
 	req := map[string]interface{}{
 		"phone": phone,
 		"code":  code,
@@ -123,7 +123,7 @@ func (s Session) AuthBySmsGetToken(phone, code string) (tdapi.Auth, error) {
 	return resp.Result, nil
 }
 
-func (s Session) AuthByPasswordGetToken(username, password string) (tdapi.Auth, error) {
+func (s *Session) AuthByPasswordGetToken(username, password string) (tdapi.Auth, error) {
 	req := map[string]string{
 		"username": username,
 		"password": password,
@@ -145,7 +145,7 @@ func (s Session) AuthByPasswordGetToken(username, password string) (tdapi.Auth, 
 	return resp.Result, nil
 }
 
-func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text string) (tdproto.Message, error) {
+func (s *Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text string) (tdproto.Message, error) {
 	req := new(tdapi.Message)
 	req.Type = tdproto.MediatypePlain
 	req.Text = text
@@ -168,7 +168,7 @@ func (s Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text str
 	return resp.Result, nil
 }
 
-func (s Session) GetMessages(teamUid string, chat tdproto.JID, f *tdapi.MessageFilter) ([]tdproto.Message, error) {
+func (s *Session) GetMessages(teamUid string, chat tdproto.JID, f *tdapi.MessageFilter) ([]tdproto.Message, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.ChatMessages `json:"result"`
@@ -185,7 +185,7 @@ func (s Session) GetMessages(teamUid string, chat tdproto.JID, f *tdapi.MessageF
 	return resp.Result.Messages, nil
 }
 
-func (s Session) DeleteMessage(teamUid string, chat tdproto.JID, msgId string) (tdproto.ChatMessages, error) {
+func (s *Session) DeleteMessage(teamUid string, chat tdproto.JID, msgId string) (tdproto.ChatMessages, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.ChatMessages `json:"result"`
@@ -202,7 +202,7 @@ func (s Session) DeleteMessage(teamUid string, chat tdproto.JID, msgId string) (
 	return resp.Result, nil
 }
 
-func (s Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, error) {
+func (s *Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.Chat `json:"result"`
@@ -225,7 +225,7 @@ type tdapiTeam struct {
 }
 
 // FIXME: open
-func (s Session) createTeam(req tdapiTeam) (tdproto.Team, error) {
+func (s *Session) createTeam(req tdapiTeam) (tdproto.Team, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.Team `json:"result"`
@@ -242,7 +242,7 @@ func (s Session) createTeam(req tdapiTeam) (tdproto.Team, error) {
 	return resp.Result, nil
 }
 
-func (s Session) CreateGroup(teamUid string, req tdapi.Group) (tdproto.Chat, error) {
+func (s *Session) CreateGroup(teamUid string, req tdapi.Group) (tdproto.Chat, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.Chat `json:"result"`
@@ -259,7 +259,7 @@ func (s Session) CreateGroup(teamUid string, req tdapi.Group) (tdproto.Chat, err
 	return resp.Result, nil
 }
 
-func (s Session) GetGroups(teamUid string) ([]tdproto.Chat, error) {
+func (s *Session) GetGroups(teamUid string) ([]tdproto.Chat, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result []tdproto.Chat `json:"result"`
@@ -276,7 +276,7 @@ func (s Session) GetGroups(teamUid string) ([]tdproto.Chat, error) {
 	return resp.Result, nil
 }
 
-func (s Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdproto.GroupMembership, error) {
+func (s *Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdproto.GroupMembership, error) {
 	req := tdapi.GroupMember{
 		Jid:    contact,
 		Status: tdproto.GroupMember,
@@ -298,7 +298,7 @@ func (s Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdp
 	return resp.Result, nil
 }
 
-func (s Session) GroupMembers(teamUid string, group tdproto.JID) ([]tdproto.GroupMembership, error) {
+func (s *Session) GroupMembers(teamUid string, group tdproto.JID) ([]tdproto.GroupMembership, error) {
 	type MembersParams struct {
 		Members []tdproto.GroupMembership `json:"members"`
 	}
@@ -322,7 +322,7 @@ func (s Session) GroupMembers(teamUid string, group tdproto.JID) ([]tdproto.Grou
 	return resp.Result.Members, nil
 }
 
-func (s Session) DropGroupMember(teamUid string, group, contact tdproto.JID) error {
+func (s *Session) DropGroupMember(teamUid string, group, contact tdproto.JID) error {
 	resp := new(tdapi.Resp)
 
 	if !tdproto.ValidUid(teamUid) {
@@ -340,7 +340,7 @@ func (s Session) DropGroupMember(teamUid string, group, contact tdproto.JID) err
 	return nil
 }
 
-func (s Session) DropGroup(teamUid string, group tdproto.JID) error {
+func (s *Session) DropGroup(teamUid string, group tdproto.JID) error {
 	resp := new(tdapi.Resp)
 
 	if !tdproto.ValidUid(teamUid) {
@@ -358,7 +358,7 @@ func (s Session) DropGroup(teamUid string, group tdproto.JID) error {
 	return nil
 }
 
-func (s Session) GetChats(teamUid string, f *tdapi.ChatFilter) ([]tdproto.Chat, error) {
+func (s *Session) GetChats(teamUid string, f *tdapi.ChatFilter) ([]tdproto.Chat, error) {
 	resp := new(struct {
 		tdapi.Resp
 		Result tdproto.PaginatedChats `json:"result"`
@@ -372,7 +372,7 @@ func (s Session) GetChats(teamUid string, f *tdapi.ChatFilter) ([]tdproto.Chat, 
 		f.Limit = 100
 	}
 
-	result := make([]tdproto.Chat, 0)
+	var result []tdproto.Chat
 	for {
 		if err := s.doGet(fmt.Sprintf("/api/v4/teams/%s/chats", teamUid), f, resp); err != nil {
 			return result, err
