@@ -3,6 +3,10 @@ name: Codecov coverage
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-20.04
