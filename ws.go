@@ -161,6 +161,7 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 				return nil
 			}
 		case <-timer.C:
+			w.fail <- Timeout
 			return Timeout
 		}
 	}
