@@ -26,7 +26,7 @@ func main() {
 	client.SetToken(settings.Token)
 	client.SetVerbose(settings.Verbose)
 
-	recipient := *tdproto.NewJID(settings.Chat)
+	recipient := tdproto.JID(settings.Chat)
 
 	msg, err := client.SendPlaintextMessage(settings.TeamUid, recipient, *message)
 	if err != nil {

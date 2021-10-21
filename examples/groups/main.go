@@ -34,7 +34,7 @@ func main() {
 	}
 	log.Println("Total team contacts count:", len(contacts))
 
-	groupUid := *tdproto.NewJID(settings.Chat)
+	groupUid := tdproto.JID(settings.Chat)
 	groupMembers, _ := session.GroupMembers(settings.TeamUid, groupUid)
 
 	companies := splitByCompanies(contacts)

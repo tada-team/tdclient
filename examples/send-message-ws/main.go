@@ -31,7 +31,7 @@ func main() {
 		panic(err)
 	}
 
-	recipient := *tdproto.NewJID(settings.Chat)
+	recipient := tdproto.JID(settings.Chat)
 
 	// composing like human. Full events list at https://github.com/tada-team/tdproto
 	websocketConnection.Send(tdproto.NewClientChatComposing(recipient, true, nil))

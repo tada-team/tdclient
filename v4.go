@@ -277,7 +277,7 @@ func (s *Session) GetGroups(teamUid string) ([]tdproto.Chat, error) {
 }
 
 func (s *Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (tdproto.GroupMembership, error) {
-	req := tdapi.GroupMember{
+	req := tdproto.GroupMembership{
 		Jid:    contact,
 		Status: tdproto.GroupMember,
 	}

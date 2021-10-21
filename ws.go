@@ -151,14 +151,6 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 					return nil
 				}
 				log.Println("tdclient: warn:", t.Params.Message)
-			case "server.panic":
-				t := new(tdproto.ServerPanic)
-				if err := JSON.Unmarshal(ev.raw, &t); err != nil {
-					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
-					return nil
-				}
-				w.fail <- fmt.Errorf("server panic: %s", t.Params.Code)
-				return nil
 			}
 		case <-timer.C:
 			w.fail <- Timeout

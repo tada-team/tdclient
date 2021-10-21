@@ -40,7 +40,7 @@ func main() {
 	client.SetToken(settings.Token)
 	client.SetVerbose(settings.Verbose)
 
-	recipient := *tdproto.NewJID(*assignee)
+	recipient := tdproto.JID(*assignee)
 	if !recipient.Valid() {
 		panic("invalid assignee jid")
 	}

@@ -39,7 +39,7 @@ func main() {
 
 	var numProcessed int
 
-	chatUid := *tdproto.NewJID(settings.Chat)
+	chatUid := tdproto.JID(settings.Chat)
 
 	filter := new(tdapi.MessageFilter)
 	filter.Lang = "ru"

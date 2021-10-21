@@ -64,7 +64,7 @@ func (s *settings) Parse() {
 		if s.Chat == "" {
 			fmt.Println("-chat required")
 			ok = false
-		} else if !tdproto.NewJID(s.Chat).Valid() {
+		} else if !tdproto.JID(s.Chat).Valid() {
 			fmt.Println("invalid chat")
 			ok = false
 		}
