@@ -75,7 +75,7 @@ func (s *Session) SetCookie(v string) {
 
 func (s *Session) SetVerbose(v bool) {
 	if v {
-		s.logger.SetOutput(os.Stdout)
+		s.logger.SetOutput(os.Stderr)
 	} else {
 		s.logger.SetOutput(io.Discard)
 	}
