@@ -39,7 +39,7 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 	w := &WsSession{
 		session:   s,
 		team:      team,
-		conn:      conn,
+		websocket: conn,
 		inbox:     make(chan serverEvent, defaultSize),
 		outBytes:  make(chan []byte, defaultSize),
 		listeners: make(map[string]chan []byte),
@@ -72,7 +72,7 @@ type serverEvent struct {
 type WsSession struct {
 	session   *Session
 	team      string
-	conn      *websocket.Conn
+	websocket *websocket.Conn
 	inbox     chan serverEvent
 	outBytes  chan []byte
 	fail      chan error
@@ -174,7 +174,7 @@ func (w *WsSession) SendRaw(b []byte) {
 
 func (w *WsSession) Close() error {
 	w.cancel()
-	return w.conn.Close()
+	return w.websocket.Close()
 }
 
 func (w *WsSession) outboxLoop() {
@@ -184,7 +184,7 @@ func (w *WsSession) outboxLoop() {
 			return
 		case b := <-w.outBytes:
 			w.session.logger.Println("send:", string(b))
-			if err := w.conn.WriteMessage(websocket.BinaryMessage, b); err != nil {
+			if err := w.websocket.WriteMessage(websocket.BinaryMessage, b); err != nil {
 				w.fail <- errors.Wrap(err, "ws client fail")
 				return
 			}
@@ -195,7 +195,7 @@ func (w *WsSession) outboxLoop() {
 func (w *WsSession) inboxLoop() {
 	var parser fastjson.Parser
 	for {
-		_, data, err := w.conn.ReadMessage()
+		_, data, err := w.websocket.ReadMessage()
 		if err != nil {
 			if w.ctx.Err() == nil {
 				w.fail <- errors.Wrap(err, "conn read fail")
