@@ -158,13 +158,14 @@ func TestSession(t *testing.T) {
 		})
 
 		t.Run("create message", func(t *testing.T) {
-			messageUid := ws.SendPlainMessage(newContact.Jid, kozma.Say())
+			testText := kozma.Say()
+			messageUid := ws.SendPlainMessage(newContact.Jid, testText)
 			msg, _, err := ws.WaitForMessage()
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
-			if msg.MessageId != messageUid {
-				t.Fatal("invalid message uid")
+			if msg.Content.Text != testText {
+				t.Fatal("message text does not match")
 			}
 
 			t.Run("delete message", func(t *testing.T) {
