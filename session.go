@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -49,7 +48,7 @@ func NewSession(server string) (*Session, error) {
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return nil, fmt.Errorf("invalid scheme: %s", u.Scheme)
+		return nil, errors.Errorf("invalid scheme: %s", u.Scheme)
 	}
 	s.server = *u
 

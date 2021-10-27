@@ -32,7 +32,7 @@ func (s *Session) Me(teamUid string) (tdproto.Contact, error) {
 	}
 
 	if !resp.Ok {
-		return tdproto.Contact{}, resp.Error
+		return tdproto.Contact{}, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result.Me, nil
@@ -53,7 +53,7 @@ func (s *Session) Contacts(teamUid string) ([]tdproto.Contact, error) {
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -74,7 +74,7 @@ func (s *Session) AddContact(teamUid string, phone string) (tdproto.Contact, err
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -95,7 +95,7 @@ func (s *Session) AuthBySmsSendCode(phone string) (tdapi.SmsCode, error) {
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -117,7 +117,7 @@ func (s *Session) AuthBySmsGetToken(phone, code string) (tdapi.Auth, error) {
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -139,7 +139,7 @@ func (s *Session) AuthByPasswordGetToken(username, password string) (tdapi.Auth,
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -162,7 +162,7 @@ func (s *Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text st
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -179,7 +179,7 @@ func (s *Session) GetMessages(teamUid string, chat tdproto.JID, f *tdapi.Message
 	}
 
 	if !resp.Ok {
-		return nil, resp.Error
+		return nil, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result.Messages, nil
@@ -196,7 +196,7 @@ func (s *Session) DeleteMessage(teamUid string, chat tdproto.JID, msgId string) 
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -213,7 +213,7 @@ func (s *Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, erro
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -236,7 +236,7 @@ func (s *Session) createTeam(req tdapiTeam) (tdproto.Team, error) {
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -253,7 +253,7 @@ func (s *Session) CreateGroup(teamUid string, req tdapi.Group) (tdproto.Chat, er
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -270,7 +270,7 @@ func (s *Session) GetGroups(teamUid string) ([]tdproto.Chat, error) {
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -292,7 +292,7 @@ func (s *Session) AddGroupMember(teamUid string, group, contact tdproto.JID) (td
 	}
 
 	if !resp.Ok {
-		return resp.Result, resp.Error
+		return resp.Result, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result, nil
@@ -316,7 +316,7 @@ func (s *Session) GroupMembers(teamUid string, group tdproto.JID) ([]tdproto.Gro
 	}
 
 	if !resp.Ok {
-		return resp.Result.Members, resp.Error
+		return resp.Result.Members, errors.Wrap(resp.Error, "")
 	}
 
 	return resp.Result.Members, nil
@@ -334,7 +334,7 @@ func (s *Session) DropGroupMember(teamUid string, group, contact tdproto.JID) er
 	}
 
 	if !resp.Ok {
-		return resp.Error
+		return errors.Wrap(resp.Error, "")
 	}
 
 	return nil
@@ -352,7 +352,7 @@ func (s *Session) DropGroup(teamUid string, group tdproto.JID) error {
 	}
 
 	if !resp.Ok {
-		return resp.Error
+		return errors.Wrap(resp.Error, "")
 	}
 
 	return nil
@@ -379,7 +379,7 @@ func (s *Session) GetChats(teamUid string, f *tdapi.ChatFilter) ([]tdproto.Chat,
 		}
 
 		if !resp.Ok {
-			return result, resp.Error
+			return result, errors.Wrap(resp.Error, "")
 		}
 
 		if len(resp.Result.Objects) == 0 {
