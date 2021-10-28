@@ -5,13 +5,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
 
 	"github.com/gorilla/schema"
+	"github.com/kpango/glg"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 )
@@ -28,19 +28,31 @@ var httpClient = &http.Client{
 }
 
 type Session struct {
-	logger   *log.Logger
 	server   url.URL
 	token    string
 	cookie   string
 	features *tdproto.Features
 }
 
+var tdclientGlgLogger *glg.Glg = nil
+
+func createGlgLogger() {
+	tdclientGlgLogger = glg.New()
+
+	log_level_env, found := os.LookupEnv("TDCLIENT_LOG_LEVEL")
+	if found {
+		tdclientGlgLogger.SetLevel(glg.Atol(log_level_env))
+	} else {
+		tdclientGlgLogger.SetLevel(glg.WARN)
+	}
+}
+
 func NewSession(server string) (*Session, error) {
-	s := &Session{
-		logger: log.New(os.Stdout, "tdclient: ", log.LstdFlags|log.Lmicroseconds|log.Lmsgprefix),
+	if tdclientGlgLogger == nil {
+		createGlgLogger()
 	}
 
-	s.SetVerbose(false)
+	s := &Session{}
 
 	u, err := url.Parse(server)
 	if err != nil {
@@ -70,14 +82,6 @@ func (s *Session) SetToken(v string) {
 
 func (s *Session) SetCookie(v string) {
 	s.cookie = v
-}
-
-func (s *Session) SetVerbose(v bool) {
-	if v {
-		s.logger.SetOutput(os.Stderr)
-	} else {
-		s.logger.SetOutput(io.Discard)
-	}
 }
 
 func (s *Session) doGet(path string, params interface{}, resp interface{}) error {
@@ -112,10 +116,10 @@ func (s *Session) doRaw(method, path string, params, data, v interface{}) error 
 
 	var buf *bytes.Buffer
 	if data == nil {
-		s.logger.Println(method, path)
+		tdclientGlgLogger.Debug(method, path)
 		buf = bytes.NewBuffer([]byte{})
 	} else {
-		s.logger.Println(method, path, debugJSON(data))
+		tdclientGlgLogger.Debug(method, path, debugJSON(data))
 		b, err := json.Marshal(data)
 		if err != nil {
 			return errors.Wrap(err, "json marshal fail")
@@ -147,7 +151,7 @@ func (s *Session) doRaw(method, path string, params, data, v interface{}) error 
 		return errors.Wrapf(err, "unmarshal fail on: %s", string(respData))
 	}
 
-	s.logger.Println(debugJSON(v))
+	tdclientGlgLogger.Debug(debugJSON(v))
 
 	return nil
 }

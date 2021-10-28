@@ -17,8 +17,6 @@ func main() {
 		panic(err)
 	}
 
-	client.SetVerbose(settings.Verbose)
-
 	prompt := promptui.Prompt{Label: "Enter login"}
 	login, err := prompt.Run()
 	if err != nil {
@@ -37,8 +35,5 @@ func main() {
 	}
 
 	fmt.Println("Your token:", tokenResp.Token)
-
-
-
 
 }

@@ -35,7 +35,6 @@ func main() {
 	}
 
 	client.SetToken(settings.Token)
-	client.SetVerbose(settings.Verbose)
 
 	var numProcessed int
 

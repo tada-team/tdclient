@@ -19,7 +19,6 @@ func main() {
 	}
 
 	client.SetToken(settings.Token)
-	client.SetVerbose(settings.Verbose)
 
 	contacts, err := client.Contacts(settings.TeamUid)
 	if err != nil {

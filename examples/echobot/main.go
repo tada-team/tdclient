@@ -25,7 +25,6 @@ func main() {
 	}
 
 	client.SetToken(settings.Token)
-	client.SetVerbose(settings.Verbose)
 
 	websocketConnection, err := client.Ws(settings.TeamUid, nil)
 	if err != nil {

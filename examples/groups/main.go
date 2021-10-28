@@ -26,7 +26,6 @@ func main() {
 	}
 
 	session.SetToken(settings.Token)
-	session.SetVerbose(settings.Verbose)
 
 	contacts, err := session.Contacts(settings.TeamUid)
 	if err != nil {

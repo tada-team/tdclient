@@ -3,7 +3,6 @@ package tdclient
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -52,7 +51,7 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 		err := <-w.fail
 		if err != nil {
 			if onfail == nil {
-				s.logger.Panic("ws client fail:", err)
+				tdclientGlgLogger.Fatal("ws client fail:", err)
 			}
 			onfail(err)
 		}
@@ -136,7 +135,7 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 	for {
 		select {
 		case ev := <-w.inbox:
-			w.session.logger.Println("got:", string(ev.raw))
+			tdclientGlgLogger.Debug("recieved event: ", string(ev.raw))
 			switch ev.name {
 			case name:
 				if err := JSON.Unmarshal(ev.raw, &v); err != nil {
@@ -146,11 +145,12 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 				return nil
 			case "server.warning":
 				t := new(tdproto.ServerWarning)
+
 				if err := JSON.Unmarshal(ev.raw, &t); err != nil {
 					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
 					return nil
 				}
-				log.Println("tdclient: warn:", t.Params.Message)
+				tdclientGlgLogger.Warn("recieved server warning", t.Params.Message)
 			}
 		case <-timer.C:
 			w.fail <- Timeout
@@ -183,7 +183,7 @@ func (w *WsSession) outboxLoop() {
 		case <-w.ctx.Done():
 			return
 		case b := <-w.outBytes:
-			w.session.logger.Println("send:", string(b))
+			tdclientGlgLogger.Debug("event sent:", string(b))
 			if err := w.websocket.WriteMessage(websocket.BinaryMessage, b); err != nil {
 				w.fail <- errors.Wrap(err, "ws client fail")
 				return
@@ -203,7 +203,7 @@ func (w *WsSession) inboxLoop() {
 			return
 		}
 
-		w.session.logger.Println("got:", string(data))
+		tdclientGlgLogger.Debug("received websocket data", string(data))
 		v, err := parser.ParseBytes(data)
 		if err != nil {
 			w.fail <- errors.Wrapf(err, "invalid json: `%s`", string(data))

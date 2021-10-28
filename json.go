@@ -2,7 +2,6 @@ package tdclient
 
 import (
 	"bytes"
-	"log"
 
 	jsoniter "github.com/json-iterator/go"
 
@@ -17,7 +16,7 @@ func debugJSON(v interface{}) string {
 	debugEncoder.SetIndent("", "    ")
 	debugEncoder.SetEscapeHTML(false)
 	if err := debugEncoder.Encode(v); err != nil {
-		log.Panicln(errors.Wrap(err, "json marshall fail"))
+		tdclientGlgLogger.Fatalln(errors.Wrap(err, "json marshall fail"))
 	}
 	return b.String()
 }

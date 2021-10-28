@@ -17,8 +17,6 @@ func main() {
 		panic(err)
 	}
 
-	client.SetVerbose(settings.Verbose)
-
 	prompt := promptui.Prompt{Label: "Enter phone"}
 	phone, err := prompt.Run()
 	if err != nil {

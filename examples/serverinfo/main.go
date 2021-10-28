@@ -16,7 +16,6 @@ func main() {
 		panic(err)
 	}
 
-	client.SetVerbose(settings.Verbose)
 	features, err := client.Features()
 	if err != nil {
 		panic(err)

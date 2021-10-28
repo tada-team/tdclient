@@ -38,7 +38,6 @@ func main() {
 	}
 
 	client.SetToken(settings.Token)
-	client.SetVerbose(settings.Verbose)
 
 	recipient := tdproto.JID(*assignee)
 	if !recipient.Valid() {
