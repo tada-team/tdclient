@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -78,6 +79,7 @@ type WsSession struct {
 	listeners map[string]chan []byte
 	ctx       context.Context
 	cancel    context.CancelFunc
+	sendMutex sync.Mutex
 }
 
 func (w *WsSession) Ping() string {
@@ -175,6 +177,25 @@ func (w *WsSession) SendRaw(b []byte) {
 func (w *WsSession) Close() error {
 	w.cancel()
 	return w.websocket.Close()
+}
+
+func (w *WsSession) SendEvent(event tdproto.Event) error {
+	b, err := JSON.Marshal(event)
+	if err != nil {
+		tdclientGlgLogger.Warn(errors.Wrap(err, ""))
+		return err
+	}
+
+	w.sendMutex.Lock()
+	defer w.sendMutex.Unlock()
+
+	tdclientGlgLogger.Debug("event sent:", string(b))
+	if err := w.websocket.WriteMessage(websocket.BinaryMessage, b); err != nil {
+		tdclientGlgLogger.Warn(errors.Wrap(err, ""))
+		return err
+	}
+
+	return nil
 }
 
 func (w *WsSession) outboxLoop() {
