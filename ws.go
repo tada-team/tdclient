@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -162,9 +163,19 @@ func (w *WsSession) SendRaw(b []byte) error {
 	w.sendMutex.Lock()
 	defer w.sendMutex.Unlock()
 
+	err := w.websocket.SetWriteDeadline(time.Now().Add(httpClient.Timeout))
+	if err != nil {
+		return err
+	}
+
 	tdclientGlgLogger.Debug("raw sent:", string(b))
 	if err := w.websocket.WriteMessage(websocket.BinaryMessage, b); err != nil {
 		tdclientGlgLogger.Warn(errors.Wrap(err, ""))
+		return err
+	}
+
+	err = w.websocket.SetWriteDeadline(time.Time{})
+	if err != nil {
 		return err
 	}
 
