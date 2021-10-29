@@ -56,7 +56,7 @@ func main() {
 		log.Println("got:", message.PushText)
 
 		if *useReplyToField {
-			websocketConnection.Send(tdproto.NewClientMessageUpdated(tdproto.ClientMessageUpdatedParams{
+			websocketConnection.SendEvent(tdproto.NewClientMessageUpdated(tdproto.ClientMessageUpdatedParams{
 				To:      message.Chat,
 				ReplyTo: message.MessageId,
 				Content: tdproto.MessageContent{

@@ -33,14 +33,14 @@ func main() {
 	recipient := tdproto.JID(settings.Chat)
 
 	// composing like human. Full events list at https://github.com/tada-team/tdproto
-	websocketConnection.Send(tdproto.NewClientChatComposing(recipient, true, nil))
+	websocketConnection.SendEvent(tdproto.NewClientChatComposing(recipient, true, nil))
 	time.Sleep(3 * time.Second)
 
 	// shortcut for simple messaging
 	websocketConnection.SendPlainMessage(recipient, *message)
 
 	// stop composing
-	websocketConnection.Send(tdproto.NewClientChatComposing(recipient, false, nil))
+	websocketConnection.SendEvent(tdproto.NewClientChatComposing(recipient, false, nil))
 	time.Sleep(3 * time.Second)
 
 	// stay online while message not sent

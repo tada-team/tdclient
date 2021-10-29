@@ -41,7 +41,6 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 		team:      team,
 		websocket: conn,
 		inbox:     make(chan serverEvent, defaultSize),
-		outBytes:  make(chan []byte, defaultSize),
 		listeners: make(map[string]chan []byte),
 		fail:      make(chan error),
 	}
@@ -58,7 +57,6 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 		}
 	}()
 
-	go w.outboxLoop()
 	go w.inboxLoop()
 
 	return w, nil
@@ -74,7 +72,6 @@ type WsSession struct {
 	team      string
 	websocket *websocket.Conn
 	inbox     chan serverEvent
-	outBytes  chan []byte
 	fail      chan error
 	listeners map[string]chan []byte
 	ctx       context.Context
@@ -90,7 +87,7 @@ func (w *WsSession) Ping() string {
 
 func (w *WsSession) SendPlainMessage(to tdproto.JID, text string) string {
 	uid := uuid.New().String()
-	w.Send(tdproto.NewClientMessageUpdated(tdproto.ClientMessageUpdatedParams{
+	w.SendEvent(tdproto.NewClientMessageUpdated(tdproto.ClientMessageUpdatedParams{
 		MessageId: uid,
 		To:        to,
 		Content: tdproto.MessageContent{
@@ -101,8 +98,8 @@ func (w *WsSession) SendPlainMessage(to tdproto.JID, text string) string {
 	return uid
 }
 
-func (w *WsSession) DeleteMessage(uid string) string {
-	return w.Send(tdproto.NewClientMessageDeleted(uid))
+func (w *WsSession) DeleteMessage(uid string) error {
+	return w.SendEvent(tdproto.NewClientMessageDeleted(uid))
 }
 
 func (w *WsSession) WaitForMessage() (tdproto.Message, bool, error) {
@@ -161,17 +158,17 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 	}
 }
 
-func (w *WsSession) Send(event tdproto.Event) string {
-	b, err := JSON.Marshal(event)
-	if err != nil {
-		w.fail <- errors.Wrap(err, "json marshal fail")
-	}
-	w.SendRaw(b)
-	return event.GetConfirmId()
-}
+func (w *WsSession) SendRaw(b []byte) error {
+	w.sendMutex.Lock()
+	defer w.sendMutex.Unlock()
 
-func (w *WsSession) SendRaw(b []byte) {
-	w.outBytes <- b
+	tdclientGlgLogger.Debug("raw sent:", string(b))
+	if err := w.websocket.WriteMessage(websocket.BinaryMessage, b); err != nil {
+		tdclientGlgLogger.Warn(errors.Wrap(err, ""))
+		return err
+	}
+
+	return nil
 }
 
 func (w *WsSession) Close() error {
@@ -196,21 +193,6 @@ func (w *WsSession) SendEvent(event tdproto.Event) error {
 	}
 
 	return nil
-}
-
-func (w *WsSession) outboxLoop() {
-	for {
-		select {
-		case <-w.ctx.Done():
-			return
-		case b := <-w.outBytes:
-			tdclientGlgLogger.Debug("event sent:", string(b))
-			if err := w.websocket.WriteMessage(websocket.BinaryMessage, b); err != nil {
-				w.fail <- errors.Wrap(err, "ws client fail")
-				return
-			}
-		}
-	}
 }
 
 func (w *WsSession) inboxLoop() {
@@ -267,7 +249,7 @@ func (w *WsSession) SendCallOffer(jid tdproto.JID, sdp string) {
 	callOffer.Params.Jid = jid
 	callOffer.Params.Trickle = false
 	callOffer.Params.Sdp = sdp
-	w.Send(callOffer)
+	w.SendEvent(callOffer)
 }
 
 func (w *WsSession) SendCallLeave(jid tdproto.JID) {
@@ -275,5 +257,5 @@ func (w *WsSession) SendCallLeave(jid tdproto.JID) {
 	callLeave.Name = callLeave.GetName()
 	callLeave.Params.Jid = jid
 	callLeave.Params.Reason = ""
-	w.Send(callLeave)
+	w.SendEvent(callLeave)
 }
