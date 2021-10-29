@@ -183,6 +183,13 @@ func (w *WsSession) SendRaw(b []byte) error {
 }
 
 func (w *WsSession) Close() error {
+	closeMessage := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "tdclient closing")
+
+	if err := w.SendRaw(closeMessage); err != nil {
+		return err
+	}
+	tdclientGlgLogger.Info("sent closing message")
+
 	w.cancel()
 	return w.websocket.Close()
 }
