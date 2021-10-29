@@ -182,17 +182,8 @@ func (w *WsSession) SendEvent(event tdproto.Event) error {
 		tdclientGlgLogger.Warn(errors.Wrap(err, ""))
 		return err
 	}
-
-	w.sendMutex.Lock()
-	defer w.sendMutex.Unlock()
-
-	tdclientGlgLogger.Debug("event sent:", string(b))
-	if err := w.websocket.WriteMessage(websocket.BinaryMessage, b); err != nil {
-		tdclientGlgLogger.Warn(errors.Wrap(err, ""))
-		return err
-	}
-
-	return nil
+	tdclientGlgLogger.Info("sending event:", event)
+	return w.SendRaw(b)
 }
 
 func (w *WsSession) inboxLoop() {
