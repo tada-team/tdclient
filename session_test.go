@@ -159,6 +159,7 @@ func TestSession(t *testing.T) {
 
 		t.Run("create message", func(t *testing.T) {
 			testText := kozma.Say()
+			time.Sleep(1 * time.Second) // HACK
 			messageUid := ws.SendPlainMessage(newContact.Jid, testText)
 			msg, _, err := ws.WaitForMessage()
 			if err != nil {

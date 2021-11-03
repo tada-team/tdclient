@@ -84,8 +84,6 @@ github.com/tada-team/kozma v1.1.0 h1:BGwxSK43Dpr6wKoXVTVbdfoTFTptOEhxmni6aCOreJU
 github.com/tada-team/kozma v1.1.0/go.mod h1:TIsa1b64SsrVPFEqdoJDnMhO3HYFVpN0B0t2GKh93uY=
 github.com/tada-team/tdproto v1.49.1 h1:77IYc2z/Awkc6amzYGBNgaYHAnqD7po1AWf4a9Nj8kc=
 github.com/tada-team/tdproto v1.49.1/go.mod h1:bZUrzxSQKfg8dCmWCsxB1nOyTGEDsqhab7sph2qfi5E=
-github.com/tada-team/timerpool v1.0.0 h1:TCXOQNiOWqSHK6KPKgKJYuO/YdcZ825EF9U0l1MunIE=
-github.com/tada-team/timerpool v1.0.0/go.mod h1:MmEH36Zgih5FrFzbl7kc8FmcbhNV56sWy+ovcFHgxXA=
 github.com/tealeg/xlsx/v3 v3.2.3 h1:MXnVh+9Y8cUglowItTy2HL3Kv6z+q/0aNjeKuTsVqZQ=
 github.com/tealeg/xlsx/v3 v3.2.3/go.mod h1:0hGmAEoZ48SS1ZAE6eqZJkJVXgOMY+8a33vjXa8S8HA=
 github.com/valyala/fastjson v1.6.3 h1:tAKFnnwmeMGPbwJ7IwxcTPCNr3uIzoIj3/Fh90ra4xc=

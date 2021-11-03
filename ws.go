@@ -2,7 +2,6 @@ package tdclient
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -12,7 +11,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
-	"github.com/tada-team/timerpool"
 	"github.com/valyala/fastjson"
 )
 
@@ -38,25 +36,13 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 	}
 
 	w := &WsSession{
-		session:   s,
-		team:      team,
-		websocket: conn,
-		inbox:     make(chan serverEvent, defaultSize),
-		listeners: make(map[string]chan []byte),
-		fail:      make(chan error),
+		session:        s,
+		team:           team,
+		websocket:      conn,
+		eventListeners: make([]eventListener, 0),
 	}
 
 	w.ctx, w.cancel = context.WithCancel(context.Background())
-
-	go func() {
-		err := <-w.fail
-		if err != nil {
-			if onfail == nil {
-				tdclientGlgLogger.Fatal("ws client fail:", err)
-			}
-			onfail(err)
-		}
-	}()
 
 	go w.inboxLoop()
 
@@ -68,16 +54,22 @@ type serverEvent struct {
 	raw  []byte
 }
 
+type eventListener struct {
+	eventChannel    chan serverEvent
+	finishedChannel chan struct{}
+	isFinished      bool
+}
+
 type WsSession struct {
-	session   *Session
-	team      string
-	websocket *websocket.Conn
-	inbox     chan serverEvent
-	fail      chan error
-	listeners map[string]chan []byte
-	ctx       context.Context
-	cancel    context.CancelFunc
-	sendMutex sync.Mutex
+	session             *Session
+	currentError        error
+	eventListeners      []eventListener
+	eventListenerMutext sync.Mutex
+	team                string
+	websocket           *websocket.Conn
+	ctx                 context.Context
+	cancel              context.CancelFunc
+	sendMutex           sync.Mutex
 }
 
 func (w *WsSession) Ping() string {
@@ -120,40 +112,44 @@ func (w *WsSession) WaitForConfirm() (string, error) {
 	return v.Params.ConfirmId, nil
 }
 
-func (w *WsSession) ListenFor(v tdproto.Event) chan []byte {
-	ch := make(chan []byte, defaultSize)
-	w.listeners[v.GetName()] = ch
-	return ch
-}
-
 func (w *WsSession) WaitFor(v tdproto.Event) error {
 	name := v.GetName()
+	listenerData := eventListener{
+		eventChannel:    make(chan serverEvent),
+		finishedChannel: make(chan struct{}),
+	}
 
-	timer := timerpool.Get(httpClient.Timeout)
-	defer timerpool.Release(timer)
+	func() {
+		w.eventListenerMutext.Lock()
+		defer w.eventListenerMutext.Unlock()
+
+		w.eventListeners = append(w.eventListeners, listenerData)
+	}()
+
+	defer func() {
+		listenerData.finishedChannel <- struct{}{}
+	}()
 
 	for {
 		select {
-		case ev := <-w.inbox:
+		case ev := <-listenerData.eventChannel:
 			tdclientGlgLogger.Debug("recieved event: ", string(ev.raw))
 			switch ev.name {
 			case name:
 				if err := JSON.Unmarshal(ev.raw, &v); err != nil {
-					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
-					return nil
+					return errors.Wrapf(err, "json fail on %v", string(ev.raw))
 				}
 				return nil
 			case "server.warning":
 				t := new(tdproto.ServerWarning)
 
 				if err := JSON.Unmarshal(ev.raw, &t); err != nil {
-					w.fail <- errors.Wrapf(err, "json fail on %v", string(ev.raw))
-					return nil
+					return errors.Wrapf(err, "json fail on %v", string(ev.raw))
+
 				}
 				tdclientGlgLogger.Warn("recieved server warning", t.Params.Message)
 			}
-		case <-timer.C:
-			w.fail <- Timeout
+		case <-time.After(httpClient.Timeout):
 			return Timeout
 		}
 	}
@@ -206,20 +202,22 @@ func (w *WsSession) SendEvent(event tdproto.Event) error {
 
 func (w *WsSession) inboxLoop() {
 	var parser fastjson.Parser
+
 	for {
+		futureListeners := make([]eventListener, 0)
+
 		_, data, err := w.websocket.ReadMessage()
 		if err != nil {
-			if w.ctx.Err() == nil {
-				w.fail <- errors.Wrap(err, "conn read fail")
-			}
+			tdclientGlgLogger.Error(err)
+			w.currentError = err
 			return
 		}
 
 		tdclientGlgLogger.Debug("received websocket data", string(data))
 		v, err := parser.ParseBytes(data)
 		if err != nil {
-			w.fail <- errors.Wrapf(err, "invalid json: `%s`", string(data))
-			return
+			tdclientGlgLogger.Error(err)
+			continue
 		}
 
 		confirmId := string(v.GetStringBytes("confirm_id"))
@@ -231,24 +229,31 @@ func (w *WsSession) inboxLoop() {
 			name: string(v.GetStringBytes("event")),
 			raw:  data,
 		}
+		func() {
+			w.eventListenerMutext.Lock()
+			defer w.eventListenerMutext.Unlock()
 
-		ch := w.listeners[ev.name]
-		if ch != nil {
-			select {
-			case ch <- ev.raw:
-			default:
-				w.fail <- fmt.Errorf("listener %s chan is full", ev.name)
+			for _, listener := range w.eventListeners {
+				if listener.isFinished {
+					close(listener.eventChannel)
+				} else {
+					select {
+					case listener.eventChannel <- ev:
+					case <-listener.finishedChannel:
+						continue
+					}
+
+					futureListeners = append(futureListeners, listener)
+				}
 			}
-			continue
-		}
-
+		}()
 		select {
-		case w.inbox <- ev:
 		case <-w.ctx.Done():
 			return
 		default:
-			w.fail <- errors.Wrapf(err, "full inbox")
 		}
+
+		w.eventListeners = futureListeners
 	}
 }
 
