@@ -140,14 +140,6 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 					return errors.Wrapf(err, "json fail on %v", string(ev.raw))
 				}
 				return nil
-			case "server.warning":
-				t := new(tdproto.ServerWarning)
-
-				if err := JSON.Unmarshal(ev.raw, &t); err != nil {
-					return errors.Wrapf(err, "json fail on %v", string(ev.raw))
-
-				}
-				tdclientGlgLogger.Warn("recieved server warning", t.Params.Message)
 			}
 		case <-time.After(httpClient.Timeout):
 			return Timeout
@@ -233,6 +225,10 @@ func (w *WsSession) inboxLoop() {
 		if !ok {
 			tdclientGlgLogger.Warn("failed to get event name of event, got: ", eventNameInterface)
 			continue
+		}
+
+		if eventName == "server.warning" {
+			tdclientGlgLogger.Warnf("recieved server warning: %q", receivedEvent["params"])
 		}
 
 		ev := serverEvent{
