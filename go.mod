@@ -16,5 +16,4 @@ require (
 	github.com/tada-team/kozma v1.1.0
 	github.com/tada-team/tdproto v1.49.1
 	github.com/tealeg/xlsx/v3 v3.2.3
-	github.com/valyala/fastjson v1.6.3
 )

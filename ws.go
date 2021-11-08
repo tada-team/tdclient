@@ -2,6 +2,7 @@ package tdclient
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"sync"
@@ -11,7 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
-	"github.com/valyala/fastjson"
 )
 
 var (
@@ -201,32 +201,42 @@ func (w *WsSession) SendEvent(event tdproto.Event) error {
 }
 
 func (w *WsSession) inboxLoop() {
-	var parser fastjson.Parser
-
 	for {
 		futureListeners := make([]eventListener, 0)
 
 		_, data, err := w.websocket.ReadMessage()
 		if err != nil {
-			tdclientGlgLogger.Error(err)
+			tdclientGlgLogger.Error("websocket reading error: ", err)
 			w.currentError = err
 			return
 		}
 
-		tdclientGlgLogger.Debug("received websocket data", string(data))
-		v, err := parser.ParseBytes(data)
+		tdclientGlgLogger.Debugf("received websocket data %q", data)
+
+		var receivedEvent map[string]interface{}
+		err = json.Unmarshal(data, &receivedEvent)
 		if err != nil {
-			tdclientGlgLogger.Error(err)
+			tdclientGlgLogger.Warn("failed to unmarshal json event: ", err)
 			continue
 		}
 
-		confirmId := string(v.GetStringBytes("confirm_id"))
-		if confirmId != "" {
-			w.SendRaw(tdproto.XClientConfirm(confirmId))
+		// Try to get confirm_id and resend it back
+		confirmIdInterface := receivedEvent["confirm_id"]
+		confirmId, ok := confirmIdInterface.(string)
+		if ok {
+			if confirmId != "" {
+				w.SendRaw(tdproto.XClientConfirm(confirmId))
+			}
+		}
+		eventNameInterface := receivedEvent["event"]
+		eventName, ok := eventNameInterface.(string)
+		if !ok {
+			tdclientGlgLogger.Warn("failed to get event name of event, got: ", eventNameInterface)
+			continue
 		}
 
 		ev := serverEvent{
-			name: string(v.GetStringBytes("event")),
+			name: eventName,
 			raw:  data,
 		}
 		func() {
@@ -272,4 +282,8 @@ func (w *WsSession) SendCallLeave(jid tdproto.JID) {
 	callLeave.Params.Jid = jid
 	callLeave.Params.Reason = ""
 	w.SendEvent(callLeave)
+}
+
+func (w *WsSession) ForeachMessage() error {
+	return nil
 }

@@ -86,8 +86,6 @@ github.com/tada-team/tdproto v1.49.1 h1:77IYc2z/Awkc6amzYGBNgaYHAnqD7po1AWf4a9Nj
 github.com/tada-team/tdproto v1.49.1/go.mod h1:bZUrzxSQKfg8dCmWCsxB1nOyTGEDsqhab7sph2qfi5E=
 github.com/tealeg/xlsx/v3 v3.2.3 h1:MXnVh+9Y8cUglowItTy2HL3Kv6z+q/0aNjeKuTsVqZQ=
 github.com/tealeg/xlsx/v3 v3.2.3/go.mod h1:0hGmAEoZ48SS1ZAE6eqZJkJVXgOMY+8a33vjXa8S8HA=
-github.com/valyala/fastjson v1.6.3 h1:tAKFnnwmeMGPbwJ7IwxcTPCNr3uIzoIj3/Fh90ra4xc=
-github.com/valyala/fastjson v1.6.3/go.mod h1:CLCAqky6SMuOcxStkYQvblddUtoRxhYMGLrsQns1aXY=
 github.com/vmihailenco/msgpack/v5 v5.3.4 h1:qMKAwOV+meBw2Y8k9cVwAy7qErtYCwBzZ2ellBfvnqc=
 github.com/vmihailenco/msgpack/v5 v5.3.4/go.mod h1:7xyJ9e+0+9SaZT0Wt1RGleJXzli6Q/V5KbhBonMG9jc=
 github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=
