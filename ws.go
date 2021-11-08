@@ -57,7 +57,6 @@ type serverEvent struct {
 type eventListener struct {
 	eventChannel    chan serverEvent
 	finishedChannel chan struct{}
-	isFinished      bool
 }
 
 type WsSession struct {
@@ -112,9 +111,8 @@ func (w *WsSession) WaitForConfirm() (string, error) {
 	return v.Params.ConfirmId, nil
 }
 
-func (w *WsSession) WaitFor(v tdproto.Event) error {
-	name := v.GetName()
-	listenerData := eventListener{
+func (w *WsSession) createListener(eventName string) (*eventListener, error) {
+	listener := eventListener{
 		eventChannel:    make(chan serverEvent),
 		finishedChannel: make(chan struct{}),
 	}
@@ -123,16 +121,28 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 		w.eventListenerMutext.Lock()
 		defer w.eventListenerMutext.Unlock()
 
-		w.eventListeners = append(w.eventListeners, listenerData)
+		w.eventListeners = append(w.eventListeners, listener)
 	}()
 
-	defer func() {
-		listenerData.finishedChannel <- struct{}{}
-	}()
+	return &listener, nil
+}
+
+func (w *WsSession) removeLisener(listenerData *eventListener) {
+	listenerData.finishedChannel <- struct{}{}
+}
+
+func (w *WsSession) WaitFor(v tdproto.Event) error {
+	name := v.GetName()
+
+	listener, err := w.createListener(name)
+	if err != nil {
+		return err
+	}
+	defer w.removeLisener(listener)
 
 	for {
 		select {
-		case ev := <-listenerData.eventChannel:
+		case ev := <-(*listener).eventChannel:
 			tdclientGlgLogger.Debug("recieved event: ", string(ev.raw))
 			switch ev.name {
 			case name:
@@ -240,17 +250,13 @@ func (w *WsSession) inboxLoop() {
 			defer w.eventListenerMutext.Unlock()
 
 			for _, listener := range w.eventListeners {
-				if listener.isFinished {
-					close(listener.eventChannel)
-				} else {
-					select {
-					case listener.eventChannel <- ev:
-					case <-listener.finishedChannel:
-						continue
-					}
-
-					futureListeners = append(futureListeners, listener)
+				select {
+				case listener.eventChannel <- ev:
+				case <-listener.finishedChannel:
+					continue
 				}
+
+				futureListeners = append(futureListeners, listener)
 			}
 		}()
 		select {
