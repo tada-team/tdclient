@@ -163,16 +163,18 @@ func TestSession(t *testing.T) {
 			go ws.SendPlainMessage(newContact.Jid, testText)
 
 			err = ws.ForeachMessage(func(messages chan tdproto.Message, errorChan chan error) {
-				select {
-				case m := <-messages:
-					if m.Content.Text == testText {
-						errorChan <- nil
-						messageUid = m.MessageId
+				for {
+					select {
+					case m := <-messages:
+						if m.Content.Text == testText {
+							messageUid = m.MessageId
+							errorChan <- nil
+							return
+						}
+					case <-time.After(time.Second * 10):
+						errorChan <- Timeout
 						return
 					}
-				case <-time.After(time.Second * 10):
-					errorChan <- Timeout
-					return
 				}
 			})
 
@@ -183,15 +185,17 @@ func TestSession(t *testing.T) {
 			t.Run("delete message", func(t *testing.T) {
 				go ws.DeleteMessage(messageUid)
 				err = ws.ForeachMessage(func(messages chan tdproto.Message, errorChan chan error) {
-					select {
-					case m := <-messages:
-						if m.Content.Text == testText {
-							errorChan <- nil
+					for {
+						select {
+						case m := <-messages:
+							if m.Content.Text == testText {
+								errorChan <- nil
+								return
+							}
+						case <-time.After(time.Second * 10):
+							errorChan <- Timeout
 							return
 						}
-					case <-time.After(time.Second * 10):
-						errorChan <- Timeout
-						return
 					}
 				})
 

@@ -204,7 +204,6 @@ func (w *WsSession) SendEvent(event tdproto.Event) error {
 
 func (w *WsSession) inboxLoop() {
 	for {
-		futureListeners := make([]eventListener, 0)
 
 		_, data, err := w.websocket.ReadMessage()
 		if err != nil {
@@ -248,16 +247,24 @@ func (w *WsSession) inboxLoop() {
 		func() {
 			w.eventListenerMutext.Lock()
 			defer w.eventListenerMutext.Unlock()
+			futureListeners := make([]eventListener, 0)
 
 			for _, listener := range w.eventListeners {
 				select {
 				case listener.eventChannel <- ev:
+					{
+
+					}
 				case <-listener.finishedChannel:
-					continue
+					{
+						continue
+					}
 				}
 
 				futureListeners = append(futureListeners, listener)
 			}
+
+			w.eventListeners = futureListeners
 		}()
 		select {
 		case <-w.ctx.Done():
@@ -265,7 +272,6 @@ func (w *WsSession) inboxLoop() {
 		default:
 		}
 
-		w.eventListeners = futureListeners
 	}
 }
 
@@ -297,7 +303,7 @@ func (w *WsSession) ForeachMessage(messageHandler func(chan tdproto.Message, cha
 	defer w.removeLisener(listener)
 
 	messages := make(chan tdproto.Message)
-	errorsChan := make(chan error)
+	errorsChan := make(chan error, 1)
 
 	go messageHandler(messages, errorsChan)
 
@@ -312,9 +318,14 @@ func (w *WsSession) ForeachMessage(messageHandler func(chan tdproto.Message, cha
 					return errors.Wrapf(err, "json fail on %v", string(ev.raw))
 				}
 				select {
-				case messages <- event.Params.Messages[0]:
 				case err := <-errorsChan:
-					return err
+					{
+						return err
+					}
+				case messages <- event.Params.Messages[0]:
+					{
+
+					}
 				}
 			}
 		case err := <-errorsChan:
