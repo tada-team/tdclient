@@ -159,24 +159,44 @@ func TestSession(t *testing.T) {
 
 		t.Run("create message", func(t *testing.T) {
 			testText := kozma.Say()
-			time.Sleep(1 * time.Second) // HACK
-			messageUid := ws.SendPlainMessage(newContact.Jid, testText)
-			msg, _, err := ws.WaitForMessage()
+			var messageUid string
+			go ws.SendPlainMessage(newContact.Jid, testText)
+
+			err = ws.ForeachMessage(func(messages chan tdproto.Message, errorChan chan error) {
+				select {
+				case m := <-messages:
+					if m.Content.Text == testText {
+						errorChan <- nil
+						messageUid = m.MessageId
+						return
+					}
+				case <-time.After(time.Second * 10):
+					errorChan <- Timeout
+					return
+				}
+			})
+
 			if err != nil {
-				t.Fatalf("%+v", err)
-			}
-			if msg.Content.Text != testText {
-				t.Fatal("message text does not match")
+				t.Fatal("failed to get the message ", err)
 			}
 
 			t.Run("delete message", func(t *testing.T) {
-				ws.DeleteMessage(messageUid)
-				msg, _, err := ws.WaitForMessage()
+				go ws.DeleteMessage(messageUid)
+				err = ws.ForeachMessage(func(messages chan tdproto.Message, errorChan chan error) {
+					select {
+					case m := <-messages:
+						if m.Content.Text == testText {
+							errorChan <- nil
+							return
+						}
+					case <-time.After(time.Second * 10):
+						errorChan <- Timeout
+						return
+					}
+				})
+
 				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				if msg.MessageId != messageUid {
-					t.Fatal("invalid message uid")
+					t.Fatal("failed to get the message ", err)
 				}
 			})
 

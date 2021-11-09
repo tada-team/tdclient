@@ -114,7 +114,7 @@ func (w *WsSession) WaitForConfirm() (string, error) {
 func (w *WsSession) createListener(eventName string) (*eventListener, error) {
 	listener := eventListener{
 		eventChannel:    make(chan serverEvent),
-		finishedChannel: make(chan struct{}),
+		finishedChannel: make(chan struct{}, 1),
 	}
 
 	func() {
@@ -286,6 +286,39 @@ func (w *WsSession) SendCallLeave(jid tdproto.JID) {
 	w.SendEvent(callLeave)
 }
 
-func (w *WsSession) ForeachMessage() error {
-	return nil
+func (w *WsSession) ForeachMessage(messageHandler func(chan tdproto.Message, chan error)) error {
+
+	eventName := tdproto.ServerMessageUpdated{}.GetName()
+
+	listener, err := w.createListener(eventName)
+	if err != nil {
+		return err
+	}
+	defer w.removeLisener(listener)
+
+	messages := make(chan tdproto.Message)
+	errorsChan := make(chan error)
+
+	go messageHandler(messages, errorsChan)
+
+	for {
+		event := new(tdproto.ServerMessageUpdated)
+		select {
+		case ev := <-listener.eventChannel:
+			tdclientGlgLogger.Debug("recieved event: ", string(ev.raw))
+			switch ev.name {
+			case eventName:
+				if err := JSON.Unmarshal(ev.raw, &event); err != nil {
+					return errors.Wrapf(err, "json fail on %v", string(ev.raw))
+				}
+				select {
+				case messages <- event.Params.Messages[0]:
+				case err := <-errorsChan:
+					return err
+				}
+			}
+		case err := <-errorsChan:
+			return err
+		}
+	}
 }
