@@ -181,15 +181,8 @@ func (w *WsSession) SendRaw(b []byte) error {
 }
 
 func (w *WsSession) Close() error {
-	closeMessage := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "tdclient closing")
-
-	if err := w.SendRaw(closeMessage); err != nil {
-		return err
-	}
-	tdclientGlgLogger.Info("sent closing message")
-
 	w.cancel()
-	return w.websocket.Close()
+	return w.websocket.CloseHandler()(websocket.CloseNormalClosure, "tdclient closing")
 }
 
 func (w *WsSession) SendEvent(event tdproto.Event) error {
@@ -207,6 +200,10 @@ func (w *WsSession) inboxLoop() {
 
 		_, data, err := w.websocket.ReadMessage()
 		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				tdclientGlgLogger.Info("closing websocket read loop")
+				return
+			}
 			tdclientGlgLogger.Error("websocket reading error: ", err)
 			w.currentError = err
 			return
