@@ -18,7 +18,7 @@ var (
 	Timeout = errors.New("Timeout")
 )
 
-func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
+func (s *Session) Ws(team string) (*WsSession, error) {
 	if s.token == "" {
 		return nil, errors.New("empty token")
 	}

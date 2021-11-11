@@ -25,7 +25,7 @@ func main() {
 
 	client.SetToken(settings.Token)
 
-	websocketConnection, err := client.Ws(settings.TeamUid, nil)
+	websocketConnection, err := client.Ws(settings.TeamUid)
 	if err != nil {
 		panic(err)
 	}

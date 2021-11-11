@@ -139,9 +139,7 @@ func TestSession(t *testing.T) {
 	})
 
 	t.Run("ws", func(t *testing.T) {
-		ws, err := s.Ws(team.Uid, func(err error) {
-			t.Fatalf("%+v", err)
-		})
+		ws, err := s.Ws(team.Uid)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
