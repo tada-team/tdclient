@@ -342,3 +342,46 @@ func (w *WsSession) ForeachMessage(messageHandler func(chan tdproto.Message, cha
 		}
 	}
 }
+
+func (w *WsSession) ForeachData(interfaceHandler func(chan []byte, chan error)) error {
+
+	eventName := tdproto.ServerMessageUpdated{}.GetName()
+
+	listener, err := w.createListener(eventName)
+	if err != nil {
+		return err
+	}
+	defer w.removeLisener(listener)
+
+	data := make(chan []byte)
+	errorsChan := make(chan error, 1)
+
+	go interfaceHandler(data, errorsChan)
+
+	for {
+		select {
+		case ev, ok := <-listener.eventChannel:
+			if !ok {
+				close(data)
+				return w.currentError
+			}
+
+			tdclientGlgLogger.Debug("recieved event: ", string(ev.raw))
+			switch ev.name {
+			case eventName:
+				select {
+				case err := <-errorsChan:
+					{
+						return err
+					}
+				case data <- ev.raw:
+					{
+
+					}
+				}
+			}
+		case err := <-errorsChan:
+			return err
+		}
+	}
+}
