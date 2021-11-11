@@ -342,3 +342,46 @@ func (w *WsSession) ForeachMessage(messageHandler func(chan tdproto.Message, cha
 		}
 	}
 }
+
+func (w *WsSession) ForeachData(eventName string, interfaceHandler func(chan []byte, chan error)) error {
+
+	listener, err := w.createListener("")
+	if err != nil {
+		return err
+	}
+	defer w.removeLisener(listener)
+
+	data := make(chan []byte)
+	errorsChan := make(chan error, 1)
+
+	go interfaceHandler(data, errorsChan)
+
+	for {
+		select {
+		case ev, ok := <-listener.eventChannel:
+			if !ok {
+				close(data)
+				return w.currentError
+			}
+			if eventName != ev.name && eventName != "" {
+				continue
+			}
+
+			tdclientGlgLogger.Debug("recieved event: ", string(ev.raw))
+
+			select {
+			case err := <-errorsChan:
+				{
+					return err
+				}
+			case data <- ev.raw:
+				{
+
+				}
+			}
+
+		case err := <-errorsChan:
+			return err
+		}
+	}
+}
