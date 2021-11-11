@@ -146,7 +146,10 @@ func (w *WsSession) WaitFor(v tdproto.Event) error {
 
 	for {
 		select {
-		case ev := <-(*listener).eventChannel:
+		case ev, ok := <-(*listener).eventChannel:
+			if !ok {
+				return w.currentError
+			}
 			tdclientGlgLogger.Debug("recieved event: ", string(ev.raw))
 			switch ev.name {
 			case name:
@@ -184,6 +187,12 @@ func (w *WsSession) SendRaw(b []byte) error {
 	return nil
 }
 
+func (w *WsSession) StopListeners() {
+	for _, listener := range w.eventListeners {
+		close(listener.eventChannel)
+	}
+}
+
 func (w *WsSession) Close() error {
 	return w.websocket.CloseHandler()(websocket.CloseNormalClosure, "tdclient closing")
 }
@@ -203,6 +212,7 @@ func (w *WsSession) inboxLoop() {
 
 		_, data, err := w.websocket.ReadMessage()
 		if err != nil {
+			defer w.StopListeners()
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 				tdclientGlgLogger.Info("closing websocket read loop")
 				return
@@ -304,7 +314,12 @@ func (w *WsSession) ForeachMessage(messageHandler func(chan tdproto.Message, cha
 	for {
 		event := new(tdproto.ServerMessageUpdated)
 		select {
-		case ev := <-listener.eventChannel:
+		case ev, ok := <-listener.eventChannel:
+			if !ok {
+				close(messages)
+				return w.currentError
+			}
+
 			tdclientGlgLogger.Debug("recieved event: ", string(ev.raw))
 			switch ev.name {
 			case eventName:
