@@ -1,8 +1,8 @@
 package tdclient
 
 import (
-	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -15,8 +15,7 @@ import (
 )
 
 var (
-	Timeout     = errors.New("Timeout")
-	defaultSize = 20
+	Timeout = errors.New("Timeout")
 )
 
 func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
@@ -24,29 +23,13 @@ func (s *Session) Ws(team string, onfail func(error)) (*WsSession, error) {
 		return nil, errors.New("empty token")
 	}
 
-	u := s.server
-	u.Path = "/messaging/" + team
-	u.Scheme = strings.Replace(u.Scheme, "http", "ws", 1)
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), http.Header{
-		"token": []string{s.token},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
 	w := &WsSession{
 		session:        s,
 		team:           team,
-		websocket:      conn,
 		eventListeners: make([]eventListener, 0),
 	}
 
-	w.ctx, w.cancel = context.WithCancel(context.Background())
-
-	go w.inboxLoop()
-
-	return w, nil
+	return w, w.Start()
 }
 
 type serverEvent struct {
@@ -66,9 +49,30 @@ type WsSession struct {
 	eventListenerMutext sync.Mutex
 	team                string
 	websocket           *websocket.Conn
-	ctx                 context.Context
-	cancel              context.CancelFunc
 	sendMutex           sync.Mutex
+}
+
+func (w *WsSession) Start() error {
+	if len(w.eventListeners) > 0 {
+		return fmt.Errorf("event listeners exist, cannot restart socket")
+	}
+
+	u := w.session.server
+	u.Path = "/messaging/" + w.team
+	u.Scheme = strings.Replace(u.Scheme, "http", "ws", 1)
+	conn, _, err := websocket.DefaultDialer.Dial(u.String(), http.Header{
+		"token": []string{w.session.token},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	w.websocket = conn
+
+	go w.inboxLoop()
+
+	return nil
 }
 
 func (w *WsSession) Ping() string {
@@ -181,7 +185,6 @@ func (w *WsSession) SendRaw(b []byte) error {
 }
 
 func (w *WsSession) Close() error {
-	w.cancel()
 	return w.websocket.CloseHandler()(websocket.CloseNormalClosure, "tdclient closing")
 }
 
@@ -263,12 +266,6 @@ func (w *WsSession) inboxLoop() {
 
 			w.eventListeners = futureListeners
 		}()
-		select {
-		case <-w.ctx.Done():
-			return
-		default:
-		}
-
 	}
 }
 
