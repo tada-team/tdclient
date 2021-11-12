@@ -14,6 +14,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/tada-team/dateparse v0.6.1
 	github.com/tada-team/kozma v1.1.0
-	github.com/tada-team/tdproto v1.49.1
+	github.com/tada-team/tdproto v1.49.12
 	github.com/tealeg/xlsx/v3 v3.2.3
 )
