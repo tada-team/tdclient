@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -154,4 +155,57 @@ func (s *Session) doRaw(method, path string, params, data, v interface{}) error 
 	tdclientGlgLogger.Debug(debugJSON(v))
 
 	return nil
+}
+
+func (s *Session) uploadFile(path string, fname string, src io.ReadCloser, v interface{}) (http.Header, error) {
+	var u = s.server
+	u.Path = path
+
+	buf := &bytes.Buffer{}
+
+	writer := multipart.NewWriter(buf)
+	part, err := writer.CreateFormFile("file", fname)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := io.Copy(part, src); err != nil {
+		return nil, err
+	}
+
+	if err := src.Close(); err != nil {
+		return nil, err
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", u.String(), buf)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.token != "" {
+		req.Header.Set("token", s.token)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := JSON.Unmarshal(respData, &v); err != nil {
+		return nil, errors.Wrapf(err, "unmarshal fail on: %s", string(respData))
+	}
+
+	return resp.Header, nil
 }

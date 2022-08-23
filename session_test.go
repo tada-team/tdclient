@@ -1,6 +1,7 @@
 package tdclient
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -116,6 +117,21 @@ func TestSession(t *testing.T) {
 			}
 			if len(messages) < 1 {
 				t.Error("invalid get messages:", len(messages))
+			}
+		})
+		t.Run("send-upload", func(t *testing.T) {
+			file, err := ioutil.TempFile(".", "sample.txt")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.Remove(file.Name())
+			fname := "sample.txt"
+			newMsg, err := s.SendUploadMessage(team.Uid, newContact.Jid, fname, file)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(newMsg.Links) < 1 {
+				t.Error("expect to have upload in message")
 			}
 		})
 
