@@ -6,7 +6,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/json-iterator/go v1.1.10
+	github.com/json-iterator/go v1.1.12
 	github.com/kpango/glg v1.6.4
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.8.0

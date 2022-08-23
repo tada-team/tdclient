@@ -2,11 +2,11 @@ package tdclient
 
 import (
 	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 	"github.com/tada-team/tdproto/tdapi"
+	"io"
 )
 
 func (s *Session) Ping() error {
@@ -161,6 +161,27 @@ func (s *Session) SendPlaintextMessage(teamUid string, chat tdproto.JID, text st
 		return resp.Result, err
 	}
 
+	if !resp.Ok {
+		return resp.Result, errors.Wrap(resp.Error, "")
+	}
+
+	return resp.Result, nil
+}
+
+func (s *Session) SendUploadMessage(teamUid string, chat tdproto.JID, fname string, file io.ReadCloser) (tdproto.Message, error) {
+	req := new(tdapi.Message)
+
+	req.MessageUid = uuid.New().String()
+
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.Message `json:"result"`
+	})
+
+	_, err := s.uploadFile(fmt.Sprintf("/api/v4/teams/%s/chats/%s/messages", teamUid, chat), fname, file, resp)
+	if err != nil {
+		return tdproto.Message{}, errors.Wrap(err, "uploadFile error")
+	}
 	if !resp.Ok {
 		return resp.Result, errors.Wrap(resp.Error, "")
 	}
