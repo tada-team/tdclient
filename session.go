@@ -98,7 +98,7 @@ func (s *Session) doDelete(path string, resp interface{}) error {
 }
 
 func (s *Session) doPut(path string, data, v interface{}) error {
-	return s.doRaw(http.MethodPut, path, nil, nil, v)
+	return s.doRaw(http.MethodPut, path, nil, data, v)
 }
 
 func (s *Session) doRaw(method, path string, params, data, v interface{}) error {
