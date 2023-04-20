@@ -86,15 +86,19 @@ func (s *Session) SetCookie(v string) {
 }
 
 func (s *Session) doGet(path string, params interface{}, resp interface{}) error {
-	return s.doRaw("GET", path, params, nil, resp)
+	return s.doRaw(http.MethodGet, path, params, nil, resp)
 }
 
 func (s *Session) doPost(path string, data, v interface{}) error {
-	return s.doRaw("POST", path, nil, data, v)
+	return s.doRaw(http.MethodPost, path, nil, data, v)
 }
 
 func (s *Session) doDelete(path string, resp interface{}) error {
-	return s.doRaw("DELETE", path, nil, nil, resp)
+	return s.doRaw(http.MethodDelete, path, nil, nil, resp)
+}
+
+func (s *Session) doPut(path string, data, v interface{}) error {
+	return s.doRaw(http.MethodPut, path, nil, nil, v)
 }
 
 func (s *Session) doRaw(method, path string, params, data, v interface{}) error {

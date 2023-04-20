@@ -2,11 +2,12 @@ package tdclient
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/tada-team/tdproto"
 	"github.com/tada-team/tdproto/tdapi"
-	"io"
 )
 
 func (s *Session) Ping() error {
@@ -230,6 +231,27 @@ func (s *Session) CreateTask(teamUid string, req tdapi.Task) (tdproto.Chat, erro
 	})
 
 	if err := s.doPost(fmt.Sprintf("/api/v4/teams/%s/tasks", teamUid), req, resp); err != nil {
+		return resp.Result, err
+	}
+
+	if !resp.Ok {
+		return resp.Result, errors.Wrap(resp.Error, "")
+	}
+
+	return resp.Result, nil
+}
+
+func (s *Session) CloseTask(teamUid, taskUid string) (tdproto.Chat, error) {
+	resp := new(struct {
+		tdapi.Resp
+		Result tdproto.Chat `json:"result"`
+	})
+
+	req := map[string]interface{}{
+		"task_status": "done",
+	}
+
+	if err := s.doPut(fmt.Sprintf("/api/v4/teams/%s/tasks/%s", teamUid, taskUid), req, resp); err != nil {
 		return resp.Result, err
 	}
 
